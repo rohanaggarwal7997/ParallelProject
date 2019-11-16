@@ -274,8 +274,8 @@ void insert(tr root, int key) {
 
 	if(root == NULL) {
 		GLOBAL_ROOT = new struct node;
-		root->key = key;
-		root->weight = 0;
+		GLOBAL_ROOT->key = key;
+		GLOBAL_ROOT->weight = 0;
 	} else {
 		recursiveInsert(root, key);
 	}
