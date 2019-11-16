@@ -24,14 +24,14 @@ int main(int argc, char const *argv[])
 	srand(42);
 	random_shuffle(keys.begin(), keys.end());
 
-	global_root = NULL;
+	GLOBAL_ROOT = NULL;
 	for (int i = 0; i < n; ++i)
-		insert(global_root, keys[i]);
+		insert(GLOBAL_ROOT, keys[i]);
 
 	// Can we find all keys?
 	for (int i = 0; i < n; ++i) {
-		if(search(global_root, keys[i]) == NULL)
-			printf("Key %d not found\n", keys[i]);
+		if(search(GLOBAL_ROOT, keys[i]) == NULL)
+			printf("Key (%d, %d) not found\n", keys[i], i);
 	}
 
 	// Important nvariant - 
@@ -39,10 +39,11 @@ int main(int argc, char const *argv[])
 	vi heights;
 	vi leaf_wts;
 	// Rebalance
-	rebalance(global_root, NULL);
-	check_balance(global_root, heights, leaf_wts, 0);
+	rebalance(GLOBAL_ROOT, NULL);
+	check_balance(GLOBAL_ROOT, heights, leaf_wts, 0);
 
 	// Check if all the elements are same
+	printf("Number of height elements = %d\n", heights.size());
 	int ht = heights[0];
 	for (int i = 1; i < heights.size(); ++i) {
 		if(heights[i] != ht)
@@ -51,27 +52,27 @@ int main(int argc, char const *argv[])
 
 	// Can we find all keys?
 	for (int i = 0; i < n; ++i) {
-		if(search(global_root, keys[i]) == NULL)
+		if(search(GLOBAL_ROOT, keys[i]) == NULL)
 			printf("Key %d not found after initial rebalance\n", keys[i]);
 	}	
 
 
 	// Delete random keys
 	for (int i = 0; i < n/10; ++i)
-		remove(global_root, keys[i*10]);
+		remove(GLOBAL_ROOT, keys[i*10]);
 
 	// Can we find all the keys?
 	for (int i = 0; i < n; ++i) {
 		if(n % 10 == 0)
 			continue;
-		if(search(global_root, keys[i]) == NULL)
+		if(search(GLOBAL_ROOT, keys[i]) == NULL)
 			printf("Key %d not found after deleting keys\n", keys[i]);
 	}
 
 	vi heights_new;
 	vi leaf_wts_new;
-	rebalance(global_root, NULL);
-	check_balance(global_root, heights_new, leaf_wts_new, 0);
+	rebalance(GLOBAL_ROOT, NULL);
+	check_balance(GLOBAL_ROOT, heights_new, leaf_wts_new, 0);
 
 	ht = heights_new[0];
 	for (int i = 1; i < heights_new.size(); ++i) {
@@ -83,7 +84,7 @@ int main(int argc, char const *argv[])
 	for (int i = 0; i < n; ++i) {
 		if(n % 10 == 0)
 			continue;
-		if(search(global_root, keys[i]) == NULL)
+		if(search(GLOBAL_ROOT, keys[i]) == NULL)
 			printf("Key %d not found after deleting keys and rebalancing\n", keys[i]);
 	}
 
@@ -92,12 +93,15 @@ int main(int argc, char const *argv[])
 
 void check_balance(tr node, vi& heights, vi& leaf_wts, int level) {
 	
+	if(node == NULL)
+		return;
+
 	if(isLeaf(node)) {
-		heights.append(level + node->weight);
-		leaf_wts.append(node->weight);
+		heights.push_back(level + node->weight);
+		leaf_wts.push_back(node->weight);
 		return;
 	}
 	// else
-	check_balance(node->left, heights, level+node->weight);
-	check_balance(node->right, heights, level+node->weight);
+	check_balance(node->left, heights, leaf_wts, level+node->weight);
+	check_balance(node->right, heights, leaf_wts, level+node->weight);
 }

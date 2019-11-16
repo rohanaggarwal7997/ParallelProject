@@ -92,6 +92,9 @@ void rebalance(tr node, tr parent) {
 
 	int case2_leftright;
 
+	if(node == NULL)
+		return;
+
 	if(node->left == NULL && node->right == NULL) return; 
 
 	if(node->left->weight == 0 && node->right->weight == 0 && (parent == NULL || node->weight > 0)) {
@@ -258,6 +261,7 @@ void recursiveInsert(tr root, int key) {
 		
 		leafLeft->key = root->key < key ? root->key : key;
 		leafRight->key = root->key >= key ? root->key : key;
+		root->key = root->left->key;
 
 		root->weight -= 1;
 
