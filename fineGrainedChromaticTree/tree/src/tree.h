@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <algorithm>    // std::swap
+
 
 typedef struct node {
 	int key;
@@ -7,6 +9,8 @@ typedef struct node {
 	node *left;
 	node *right;
 } * tr;
+
+tr GLOBAL_ROOT;
 
 bool isLeaf(tr node);
 
@@ -71,13 +75,16 @@ void balanceCase2(tr node, tr parent, int whichEdgeRed) {
 		u->left = v;
 	}
 
-	if(parent == NULL)
-		return;
+	if(parent == NULL) GLOBAL_ROOT = u;
+	else {
+		if(parent->left == v)
+			parent->left = u;
+		else
+			parent->right = u;
+	}
 
-	if(parent->left == v)
-		parent->left = u;
-	else
-		parent->right = u;
+	std::swap(u->weight, v->weight);
+
 }
 
 
@@ -103,7 +110,6 @@ void rebalance(tr node, tr parent) {
 		(node->right->weight == 0 && node->right->left != NULL && node->right->left->weight == 0)) {
 		
 		if(node->left->weight == 0) {
-
 			tr u = node->left;
 			tr A = u->left;
 			tr T = u->right;
@@ -111,9 +117,13 @@ void rebalance(tr node, tr parent) {
 			tr C = T->right;
 			tr D = node->right;
 
+			if(parent == NULL) GLOBAL_ROOT = T;
+			else {
+				if(node == parent->left) parent->left = T;
+				else parent->right = T;
+			}
 
-			if(node == parent->left) parent->left = T;
-			else parent->right = T;
+			std::swap(T->weight, node->weight);
 
 			T->left = u;
 			T->right = node;
@@ -122,8 +132,6 @@ void rebalance(tr node, tr parent) {
 			node->left = C;
 			node->right = D;
 		} else if(node->right->weight == 0) {
-
-
 			tr u = node->right;
 			tr A = u->right;
 			tr T = u->left;
@@ -131,9 +139,13 @@ void rebalance(tr node, tr parent) {
 			tr C = T->left;
 			tr D = node->left;
 
+			if(parent == NULL) GLOBAL_ROOT = T;
+			else {
+				if(node == parent->left) parent->left = T;
+				else parent->right = T;
+			}
 
-			if(node == parent->left) parent->left = T;
-			else parent->right = T;
+			std::swap(T->weight, node->weight);
 
 			T->right = u;
 			T->left = node;
@@ -145,12 +157,57 @@ void rebalance(tr node, tr parent) {
 
 	} else if(checkCase4(node)) {
 		balanceCase4(node, parent);
-	} else if(1) {
-		if(parent == NULL) {
-			// We are at root
-		} else {
+	} else if((node->left->weight > 0 && node->right->weight == 0 && !isLeaf(node->right) && node->right->left->weight > 0) ||
+		(node->right->weight > 0 && node->left->weight == 0 && !isLeaf(node->left) && node->left->right->weight > 0)) {
 
+		if(node->left->weight > 0) {
+
+			tr A = node->left;
+			tr u = node->right;
+			tr B = u->left;
+			tr C = u->right;
+
+			if(parent == NULL) GLOBAL_ROOT = u;
+			else {
+				if(node == parent->left) parent->left = u;
+				else parent->right = u;
+			}
+
+			std::swap(u->weight, node->weight);
+			u->left = node;
+			u->right = C;
+			node->left = A;
+			node->right = B;
+
+			node->left->weight--;
+			node->right->weight--;
+			node->weight++;
+
+		} else if(node->right->weight > 0) {
+
+			tr A = node->right;
+			tr u = node->left;
+			tr B = u->right;
+			tr C = u->left;
+
+			if(parent == NULL) GLOBAL_ROOT = u;
+			else {
+				if(node == parent->left) parent->left = u;
+				else parent->right = u;
+			}
+
+			std::swap(u->weight, node->weight);
+			u->right = node;
+			u->left = C;
+			node->right = A;
+			node->left = B;
+
+
+			node->right->weight--;
+			node->left->weight--;
+			node->weight++;
 		}
+		
 	}
 
 	rebalance(node->left, node);
@@ -216,7 +273,7 @@ void recursiveInsert(tr root, int key) {
 void insert(tr root, int key) {
 
 	if(root == NULL) {
-		root = new struct node;
+		GLOBAL_ROOT = new struct node;
 		root->key = key;
 		root->weight = 0;
 	} else {
