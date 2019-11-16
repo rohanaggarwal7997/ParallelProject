@@ -8,6 +8,48 @@ typedef struct node {
 	node *right;
 } * tr;
 
+
+void rebalance(tr node, tr parent) {
+
+	if() {
+		if(parent == NULL) {
+			// We are at root
+		} else {
+
+		}
+	} else if() {
+		if(parent == NULL) {
+			// We are at root
+		} else {
+
+		}
+	} else if() {
+		if(parent == NULL) {
+			// We are at root
+		} else {
+
+		}
+	} else if() {
+		if(parent == NULL) {
+			// We are at root
+		} else {
+
+		}
+	} else if() {
+		if(parent == NULL) {
+			// We are at root
+		} else {
+
+		}
+	}
+
+	rebalance(node->left, node);
+	rebalance(node->right, node);
+
+}
+
+
+
 // NOTE - the input to this can NOT be null!!
 bool isLeaf(tr node) {
 	return node->left == NULL && node->right == NULL;
