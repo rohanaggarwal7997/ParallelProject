@@ -8,8 +8,82 @@ typedef struct node {
 	node *right;
 } * tr;
 
+bool isLeaf(tr node);
+
+bool checkCase4(tr node) {
+	bool check1 = (node->left->weight > 1) && (node->right->weight > 0);
+	bool check2 = (node->left->weight > 0) && (node->right->weight > 1);
+
+	return check1 || check2; 
+}
+
+void balanceCase4(tr node, tr parent) {
+	node->left->weight--;
+	node->right->weight--;
+
+	if(parent != NULL)
+		node->weight++;
+}
+
+// 0 - no case
+// 1  - on left
+// 2 - on right
+// Incoming is NOT leaf node
+int checkCase2(tr node) {
+
+	bool leftCheck = (!isLeaf(node->left)) && 
+					 (node->left->weight == 0) && 
+					 (node->left->left->weight == 0) && 
+					 (node->right->weight > 0);
+
+	bool rightCheck = (!isLeaf(node->right)) && 
+					 (node->right->weight == 0) && 
+					 (node->right->right->weight == 0) && 
+					 (node->left->weight > 0);
+
+	if(leftCheck)
+		return 1;
+	else if(rightCheck)
+		return 2;
+	else
+		return 0;
+
+}
+
+void balanceCase2(tr node, tr parent, int whichEdgeRed) {	
+	tr v, u, B;
+	// Left edge is red
+	if(whichEdgeRed == 1) {
+		v = node;
+		u = node->left;
+		B = node->left->right;
+
+		v->left = B;
+		u->right = v;
+	}
+	// Right edge is red
+	else {
+		v = node;
+		u = node->right;
+		B = node->right->left;
+
+		v->right = B;
+		u->left = v;
+	}
+
+	if(parent == NULL)
+		return;
+
+	if(parent->left == v)
+		parent->left = u;
+	else
+		parent->right = u;
+}
+
 
 void rebalance(tr node, tr parent) {
+
+	int case2_leftright;
 
 	if(node->left == NULL && node->right == NULL) return; 
 
@@ -23,12 +97,8 @@ void rebalance(tr node, tr parent) {
 		} else {
 			node->weight -= 1;
 		}
-	} else if(1) {
-		if(parent == NULL) {
-			// We are at root
-		} else {
-
-		}
+	} else if((case2_leftright = checkCase2(node)) != 0) {
+		balanceCase2(node, parent, case2_leftright);
 	} else if((node->left->weight == 0 && node->left->right != NULL && node->left->right->weight == 0) ||
 		(node->right->weight == 0 && node->right->left != NULL && node->right->left->weight == 0)) {
 		
@@ -73,13 +143,9 @@ void rebalance(tr node, tr parent) {
 			node->left = D;
 		}
 
+	} else if(checkCase4(node)) {
+		balanceCase4(node, parent);
 	} else if(1) {
-		if(parent == NULL) {
-			// We are at root
-		} else {
-
-		}
-	} else if() {
 		if(parent == NULL) {
 			// We are at root
 		} else {
