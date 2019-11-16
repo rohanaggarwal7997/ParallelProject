@@ -120,20 +120,24 @@ void rebalance(tr node, tr parent) {
 			tr C = T->right;
 			tr D = node->right;
 
-			if(parent == NULL) GLOBAL_ROOT = T;
-			else {
-				if(node == parent->left) parent->left = T;
-				else parent->right = T;
+			// T is not leaf
+			if(B!= NULL && C!= NULL) {
+				if(parent == NULL) GLOBAL_ROOT = T;
+				else {
+					if(node == parent->left) parent->left = T;
+					else parent->right = T;
+				}
+
+				std::swap(T->weight, node->weight);
+
+				T->left = u;
+				T->right = node;
+				u->left = A;
+				u->right = B;
+				node->left = C;
+				node->right = D;
 			}
 
-			std::swap(T->weight, node->weight);
-
-			T->left = u;
-			T->right = node;
-			u->left = A;
-			u->right = B;
-			node->left = C;
-			node->right = D;
 		} else if(node->right->weight == 0) {
 			tr u = node->right;
 			tr A = u->right;
@@ -142,20 +146,23 @@ void rebalance(tr node, tr parent) {
 			tr C = T->left;
 			tr D = node->left;
 
-			if(parent == NULL) GLOBAL_ROOT = T;
-			else {
-				if(node == parent->left) parent->left = T;
-				else parent->right = T;
+			if(B!= NULL && C!= NULL) {
+
+				if(parent == NULL) GLOBAL_ROOT = T;
+				else {
+					if(node == parent->left) parent->left = T;
+					else parent->right = T;
+				}
+
+				std::swap(T->weight, node->weight);
+
+				T->right = u;
+				T->left = node;
+				u->right = A;
+				u->left = B;
+				node->right = C;
+				node->left = D;
 			}
-
-			std::swap(T->weight, node->weight);
-
-			T->right = u;
-			T->left = node;
-			u->right = A;
-			u->left = B;
-			node->right = C;
-			node->left = D;
 		}
 
 	} else if(checkCase4(node)) {
