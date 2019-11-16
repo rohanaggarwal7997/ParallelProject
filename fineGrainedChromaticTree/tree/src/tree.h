@@ -11,25 +11,69 @@ typedef struct node {
 
 void rebalance(tr node, tr parent) {
 
-	if() {
+	if(node->left == NULL && node->right == NULL) return; 
+
+	if(node->left->weight == 0 && node->right->weight == 0 && (parent == NULL || node->weight > 0)) {
+		
+		node->left->weight = 1;
+		node->right->weight = 1;
+
+		if(parent == NULL) {
+			// We are at root Do Nothing
+		} else {
+			node->weight -= 1;
+		}
+	} else if(1) {
 		if(parent == NULL) {
 			// We are at root
 		} else {
 
 		}
-	} else if() {
-		if(parent == NULL) {
-			// We are at root
-		} else {
+	} else if((node->left->weight == 0 && node->left->right != NULL && node->left->right->weight == 0) ||
+		(node->right->weight == 0 && node->right->left != NULL && node->right->left->weight == 0)) {
+		
+		if(node->left->weight == 0) {
 
-		}
-	} else if() {
-		if(parent == NULL) {
-			// We are at root
-		} else {
+			tr u = node->left;
+			tr A = u->left;
+			tr T = u->right;
+			tr B = T->left;
+			tr C = T->right;
+			tr D = node->right;
 
+
+			if(node == parent->left) parent->left = T;
+			else parent->right = T;
+
+			T->left = u;
+			T->right = node;
+			u->left = A;
+			u->right = B;
+			node->left = C;
+			node->right = D;
+		} else if(node->right->weight == 0) {
+
+
+			tr u = node->right;
+			tr A = u->right;
+			tr T = u->left;
+			tr B = T->right;
+			tr C = T->left;
+			tr D = node->left;
+
+
+			if(node == parent->left) parent->left = T;
+			else parent->right = T;
+
+			T->right = u;
+			T->left = node;
+			u->right = A;
+			u->left = B;
+			node->right = C;
+			node->left = D;
 		}
-	} else if() {
+
+	} else if(1) {
 		if(parent == NULL) {
 			// We are at root
 		} else {
