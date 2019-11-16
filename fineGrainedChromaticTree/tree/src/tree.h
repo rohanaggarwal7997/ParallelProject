@@ -237,7 +237,7 @@ tr search(tr root, int key) {
 		}
 
 		// else
-		if(key <= ptr->key)
+		if(key < ptr->key)
 			ptr = ptr->left;
 		else
 			ptr = ptr->right;
@@ -255,13 +255,17 @@ void recursiveInsert(tr root, int key) {
 
 		leafLeft->weight = 1;
 		leafRight->weight = 1;
+		leafLeft->left = NULL;
+		leafLeft->right = NULL;
+		leafRight->left = NULL;
+		leafRight->right = NULL;
 
 		root->left = leafLeft;
 		root->right = leafRight;
 		
 		leafLeft->key = root->key < key ? root->key : key;
-		leafRight->key = root->key >= key ? root->key : key;
-		root->key = root->left->key;
+		leafRight->key = root->key != leafLeft->key ? root->key : key;
+		root->key = root->right->key;
 
 		root->weight -= 1;
 
@@ -280,6 +284,8 @@ void insert(tr root, int key) {
 		GLOBAL_ROOT = new struct node;
 		GLOBAL_ROOT->key = key;
 		GLOBAL_ROOT->weight = 0;
+		GLOBAL_ROOT->left = NULL;
+		GLOBAL_ROOT->right = NULL;
 	} else {
 		recursiveInsert(root, key);
 	}
