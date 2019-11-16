@@ -121,7 +121,6 @@ void rebalance(tr node, tr parent) {
 			tr D = node->right;
 
 			// T is not leaf
-			if(B!= NULL && C!= NULL) {
 				if(parent == NULL) GLOBAL_ROOT = T;
 				else {
 					if(node == parent->left) parent->left = T;
@@ -136,7 +135,7 @@ void rebalance(tr node, tr parent) {
 				u->right = B;
 				node->left = C;
 				node->right = D;
-			}
+			
 
 		} else if(node->right->weight == 0) {
 			tr u = node->right;
@@ -146,7 +145,6 @@ void rebalance(tr node, tr parent) {
 			tr C = T->left;
 			tr D = node->left;
 
-			if(B!= NULL && C!= NULL) {
 
 				if(parent == NULL) GLOBAL_ROOT = T;
 				else {
@@ -162,15 +160,15 @@ void rebalance(tr node, tr parent) {
 				u->left = B;
 				node->right = C;
 				node->left = D;
-			}
+			
 		}
 
 	} else if(checkCase4(node)) {
 		balanceCase4(node, parent);
-	} else if((node->left->weight > 0 && node->right->weight == 0 && !isLeaf(node->right) && node->right->left->weight > 0) ||
-		(node->right->weight > 0 && node->left->weight == 0 && !isLeaf(node->left) && node->left->right->weight > 0)) {
+	} else if((node->left->weight > 1 && node->right->weight == 0 && !isLeaf(node->right) && node->right->left->weight > 0) ||
+		(node->right->weight > 1 && node->left->weight == 0 && !isLeaf(node->left) && node->left->right->weight > 0)) {
 
-		if(node->left->weight > 0) {
+		if(node->right->weight == 0) {
 
 			tr A = node->left;
 			tr u = node->right;
@@ -193,7 +191,7 @@ void rebalance(tr node, tr parent) {
 			node->right->weight--;
 			node->weight++;
 
-		} else if(node->right->weight > 0) {
+		} else if(node->left->weight == 0) {
 
 			tr A = node->right;
 			tr u = node->left;
