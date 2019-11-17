@@ -109,8 +109,8 @@ void rebalance(tr node, tr parent) {
 		}
 	} else if((case2_leftright = checkCase2(node)) != 0) {
 		balanceCase2(node, parent, case2_leftright);
-	} else if((node->left->weight == 0 && node->left->right != NULL && node->left->right->weight == 0) ||
-		(node->right->weight == 0 && node->right->left != NULL && node->right->left->weight == 0)) {
+	} else if((node->left->weight == 0 && node->left->right != NULL && node->left->right->weight == 0 && node->right->weight > 0) ||
+		(node->right->weight == 0 && node->right->left != NULL && node->right->left->weight == 0 && node->left->weight > 0)) {
 		
 		if(node->left->weight == 0) {
 			tr u = node->left;
