@@ -288,7 +288,7 @@ void insert(tr root, int key) {
 	if(root == NULL) {
 		GLOBAL_ROOT = new struct node;
 		GLOBAL_ROOT->key = key;
-		GLOBAL_ROOT->weight = 0;
+		GLOBAL_ROOT->weight = 1;
 		GLOBAL_ROOT->left = NULL;
 		GLOBAL_ROOT->right = NULL;
 	} else {
