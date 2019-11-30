@@ -1,2 +1,2 @@
 all:
-	g++ -o tree main.cpp tree.h -g
+	g++ -o test main.cpp  -Icommon -Icommon/atomic_ops  -Icommon/dcss  -Icommon/descriptors  -Icommon/kcas  -Icommon/papi  -Icommon/recordmgr  -Icommon/rlu  -Icommon/rq  -Icommon/urcu -fpermissive -lpthread -DNDEBUG

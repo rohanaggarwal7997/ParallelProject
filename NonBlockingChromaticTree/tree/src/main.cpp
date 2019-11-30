@@ -15,78 +15,83 @@ void check_balance(tr root, vi& heights, vi& leaf_wts, int level);
 
 int main(int argc, char const *argv[])
 {
-	vi keys(n);
-	vi del(n/10);
 
-	for (int i = 0; i < n; ++i)
-		keys[i] = i;
+	init(16);
+	deleteKey(0, 0);
+	deleteKey(0, 0);
+	deleteKey(0, 0);
+// 	vi keys(n);
+// 	vi del(n/10);
 
-	srand(42);
-	random_shuffle(keys.begin(), keys.end());
+// 	for (int i = 0; i < n; ++i)
+// 		keys[i] = i;
 
-	GLOBAL_ROOT = NULL;
-	for (int i = 0; i < n; ++i)
-		insert(GLOBAL_ROOT, keys[i]);
+// 	srand(42);
+// 	random_shuffle(keys.begin(), keys.end());
 
-	// Can we find all keys?
-	for (int i = 0; i < n; ++i) {
-		if(search(GLOBAL_ROOT, keys[i]) == NULL)
-			printf("Key (%d, %d) not found\n", keys[i], i);
-	}
+// 	GLOBAL_ROOT = NULL;
+// 	for (int i = 0; i < n; ++i)
+// 		insert(GLOBAL_ROOT, keys[i]);
 
-	// Important nvariant - 
+// 	// Can we find all keys?
+// 	for (int i = 0; i < n; ++i) {
+// 		if(search(GLOBAL_ROOT, keys[i]) == NULL)
+// 			printf("Key (%d, %d) not found\n", keys[i], i);
+// 	}
 
-	vi heights;
-	vi leaf_wts;
-	// Rebalance
-	rebalance(GLOBAL_ROOT, NULL);
-	check_balance(GLOBAL_ROOT, heights, leaf_wts, 0);
+// 	// Important nvariant - 
 
-	// Check if all the elements are same
-	printf("Number of height elements = %d\n", heights.size());
-	int ht = heights[0];
-	for (int i = 1; i < heights.size(); ++i) {
-		if(heights[i] != ht)
-			printf("Height %d different from %d\n", heights[i], ht);
-	}
+// 	vi heights;
+// 	vi leaf_wts;
+// 	// Rebalance
+// 	rebalance(GLOBAL_ROOT, NULL);
+// 	check_balance(GLOBAL_ROOT, heights, leaf_wts, 0);
 
-	// Can we find all keys?
-	for (int i = 0; i < n; ++i) {
-		if(search(GLOBAL_ROOT, keys[i]) == NULL)
-			printf("Key %d not found after initial rebalance\n", keys[i]);
-	}	
+// 	// Check if all the elements are same
+// 	printf("Number of height elements = %d\n", heights.size());
+// 	int ht = heights[0];
+// 	for (int i = 1; i < heights.size(); ++i) {
+// 		if(heights[i] != ht)
+// 			printf("Height %d different from %d\n", heights[i], ht);
+// 	}
+
+// 	// Can we find all keys?
+// 	for (int i = 0; i < n; ++i) {
+// 		if(search(GLOBAL_ROOT, keys[i]) == NULL)
+// 			printf("Key %d not found after initial rebalance\n", keys[i]);
+// 	}	
 
 
-	// Delete random keys
-	for (int i = 0; i < n/10; ++i)
-		remove(GLOBAL_ROOT, keys[i*10]);
+// 	// Delete random keys
+// 	for (int i = 0; i < n/10; ++i)
+// 		remove(GLOBAL_ROOT, keys[i*10]);
 
-	// Can we find all the keys?
-	for (int i = 0; i < n; ++i) {
-		if(n % 10 == 0)
-			continue;
-		if(search(GLOBAL_ROOT, keys[i]) == NULL)
-			printf("Key %d not found after deleting keys\n", keys[i]);
-	}
+// 	// Can we find all the keys?
+// 	for (int i = 0; i < n; ++i) {
+// 		if(n % 10 == 0)
+// 			continue;
+// 		if(search(GLOBAL_ROOT, keys[i]) == NULL)
+// 			printf("Key %d not found after deleting keys\n", keys[i]);
+// 	}
 
-	vi heights_new;
-	vi leaf_wts_new;
-	rebalance(GLOBAL_ROOT, NULL);
-	check_balance(GLOBAL_ROOT, heights_new, leaf_wts_new, 0);
+// 	vi heights_new;
+// 	vi leaf_wts_new;
+// 	rebalance(GLOBAL_ROOT, NULL);
+// 	check_balance(GLOBAL_ROOT, heights_new, leaf_wts_new, 0);
 
-	ht = heights_new[0];
-	for (int i = 1; i < heights_new.size(); ++i) {
-		if(heights_new[i] != ht)
-			printf("Height(new) %d different from %d\n", heights_new[i], ht);
-	}
+// 	ht = heights_new[0];
+// 	for (int i = 1; i < heights_new.size(); ++i) {
+// 		if(heights_new[i] != ht)
+// 			printf("Height(new) %d different from %d\n", heights_new[i], ht);
+// 	}
 
-	// Can we still find all the keys?
-	for (int i = 0; i < n; ++i) {
-		if(n % 10 == 0)
-			continue;
-		if(search(GLOBAL_ROOT, keys[i]) == NULL)
-			printf("Key %d not found after deleting keys and rebalancing\n", keys[i]);
-	}
+// 	// Can we still find all the keys?
+// 	for (int i = 0; i < n; ++i) {
+// 		if(n % 10 == 0)
+// 			continue;
+// 		if(search(GLOBAL_ROOT, keys[i]) == NULL)
+// 			printf("Key %d not found after deleting keys and rebalancing\n", keys[i]);
+// 	}
 
 	return 0;
 }

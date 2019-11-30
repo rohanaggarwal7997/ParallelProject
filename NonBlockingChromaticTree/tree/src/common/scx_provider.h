@@ -33,6 +33,7 @@
 #include "plaf.h"
 #include "descriptors.h"
 #include <cstring>
+#include <assert.h>
 
 // NodeT must contain fields:
 //   volatile size_t marked                                                     --- note: any primitive type will do, as long as it is word aligned, and is the only data stored in its word
