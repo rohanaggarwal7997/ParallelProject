@@ -165,12 +165,44 @@ pair<int, bool> tryDelete(int key, int tid) {
 	else return make_pair(-1, false);
 }
 
+pair<int, bool> tryInsert(int key, int tid, tr leaf, tr parent) {
+
+	GLOBAL_SCX->scxInit(tid);
+
+	auto parent0 = GLOBAL_SCX->llx(tid, parent);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(parent0) || parent0 == GLOBAL_SCX->FINALIZED) return make_pair(-1, false);
+	GLOBAL_SCX->scxAddNode(tid, parent, false, parent0);
+
+	auto toChange = (void * volatile *) &parent->left;
+	if(leaf == parent->left) {}
+	else if(leaf == parent->right) toChange = (void * volatile *) &parent->right;  
+	else return make_pair(-1, false);
+
+	auto leaf0 = GLOBAL_SCX->llx(tid, leaf);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(leaf0) || leaf0 == GLOBAL_SCX->FINALIZED) return make_pair(-1, false);
+	GLOBAL_SCX->scxAddNode(tid, leaf, true, leaf0);
+
+	auto new1 = new struct node;
+	initializeNode(new1, key, 1, NULL, NULL);
+	int weight = leaf->key == 0x7FFFFFFF ? 1 : leaf->weight - 1;
+
+	auto new2 = new struct node;
+	if(key < leaf->key) initializeNode(new2, leaf->key, weight, new1, leaf); 
+	else initializeNode(new2, key, weight, leaf, new1);
+
+	bool scxStatus = GLOBAL_SCX->scxExecute(tid, toChange, leaf, new2);
+	if(scxStatus) return make_pair(0, weight > 1);
+	else return make_pair(-1, false);
+}
+
 int insertKey(int key, int value, int tid) {
 	std::vector<tr> searchAns = searchTree(key);
-	// std::pair<int, bool> answer = tryInsert(key, value, searchAns[2], searchAns[1]);
+	std::pair<int, bool> answer = tryInsert(key, value, searchAns[2], searchAns[1]);
 	while(answer.first == -1) {
 		searchAns = searchTree(key);
-		// answer = tryInsert(key, value, searchAns[2], searchAns[1]);
+		answer = tryInsert(key, value, searchAns[2], searchAns[1]);
 	}
 
 	if(answer.second) {
