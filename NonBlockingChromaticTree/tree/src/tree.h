@@ -447,9 +447,9 @@ bool tryRebalance3B(tr parent, tr node, int tid) {
 	auto newright = new struct node;
 	auto newleft = new struct node;
 	
-	initializeNode(newNode, noderightleft->key, node->weight, newright, newleft);
-	initializeNode(newright, noderight->key, 0, noderight->right, noderightleft->right);
-	initializeNode(newleft, node->key, 0, noderightleft->left, node->left);
+	initializeNode(newNode, noderightleft->key, node->weight, newleft, newright);
+	initializeNode(newright, noderight->key, 0, noderightleft->right, noderight->right);
+	initializeNode(newleft, node->key, 0, node->left, noderightleft->left);
 	bool scxStatus = GLOBAL_SCX->scxExecute(tid, toChange, node, newNode);
 	return scxStatus;
 }
