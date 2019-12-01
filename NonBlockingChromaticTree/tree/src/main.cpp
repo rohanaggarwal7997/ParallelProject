@@ -10,7 +10,7 @@ using namespace std;
 typedef vector<int> vi;
 
 const int n = 10000;
-const int num_processes = 12;
+const int num_processes = 10;
 
 
 void insert_nodes(int tid, vi *inKeys, int low, int high) {
@@ -44,6 +44,8 @@ int main(int argc, char const *argv[])
 
 	int chunksize = n / num_processes;
 
+
+
 	// PARALLEL
 	printf("Commence insertion\n");
 	for (int i = 0; i < num_processes; ++i) {
@@ -68,21 +70,21 @@ int main(int argc, char const *argv[])
 
 	// Shuffle again
 	random_shuffle(keys.begin(), keys.end());
-	int num_del = n/5;
+	int num_del = (3*n)/4;
 
-	vi remain_keys(n - n/5);
+	vi remain_keys(n - (3*n)/4);
 
-	for (int i = n/5; i < n; ++i)
-		remain_keys[i - n/5] = keys[i];
+	for (int i = (3*n)/4; i < n; ++i)
+		remain_keys[i - (3*n)/4] = keys[i];
 
 	// Delete keys in parallel
 	// PARALLEL
 	printf("Commence deletion\n");
-	int del_chunk = (n/5) / num_processes;
+	int del_chunk = ((3*n)/4) / num_processes;
 	vector<thread *> delthreads;
 	for (int i = 0; i < num_processes; ++i) {
 		int low = i * del_chunk;
-		int high = min((i+1) * del_chunk, n/5);
+		int high = min((i+1) * del_chunk, (3*n)/4);
 		thread* tmp = new thread(delete_nodes, i, &keys, low, high);
 		delthreads.push_back(tmp);
 	}
@@ -93,63 +95,65 @@ int main(int argc, char const *argv[])
 
 
 	printf("Check round 2\n");
-	for (int i = 0; i < n/5; ++i) {
-		if(getNode(keys[i]) != NULL)
+	for (int i = 0; i < (3*n)/4; ++i) {
+		tr x = getNode(keys[i]);
+		if(x != NULL)
 			printf("Key %d at posn %d FOUND\n", keys[i], i);
 	}
-	for (int i = 0; i < n - n/5; ++i) {
-		if(getNode(remain_keys[i]) != NULL)
+	for (int i = 0; i < n - (3*n)/4; ++i) {
+		tr x = getNode(remain_keys[i]); 
+		if((x == NULL))
 			printf("Key %d at posn %d not found\n", remain_keys[i], i);
 	}
 	printf("Check round 2 Done\n");
 
-	// Shuffle remaining keys again
-	random_shuffle(remain_keys.begin(), remain_keys.end());
+	// // Shuffle remaining keys again
+	// random_shuffle(remain_keys.begin(), remain_keys.end());
 
-	// New keys
-	vi new_keys(n/5);
-	for (int i = 0; i < n/5; ++i)
-		new_keys[i] = i + n;
+	// // New keys
+	// vi new_keys(n/5);
+	// for (int i = 0; i < n/5; ++i)
+	// 	new_keys[i] = i + n;
 
-	random_shuffle(new_keys.begin(), new_keys.end());
-	vector<thread *> delthreads_2;
-	int new_chunk = del_chunk * 2;
-	for (int i = 0; i < num_processes/2; ++i) {
-		int low = i * new_chunk;
-		int high = min((i+1) * new_chunk, n/5);
-		thread *tmp = new thread(delete_nodes, i, &remain_keys, low, high);
-		delthreads_2.push_back(tmp);
-	}
+	// random_shuffle(new_keys.begin(), new_keys.end());
+	// vector<thread *> delthreads_2;
+	// int new_chunk = del_chunk * 2;
+	// for (int i = 0; i < num_processes/2; ++i) {
+	// 	int low = i * new_chunk;
+	// 	int high = min((i+1) * new_chunk, n/5);
+	// 	thread *tmp = new thread(delete_nodes, i, &remain_keys, low, high);
+	// 	delthreads_2.push_back(tmp);
+	// }
 
-	vector<thread *> inthreads;
-	for (int idx = num_processes/2; idx < num_processes; ++idx) {
-		int i = idx - num_processes/2;
-		int low = i * new_chunk;
-		int high = min((i+1) * new_chunk, n/5);
-		thread *tmp = new thread(insert_nodes, idx, &new_keys, low, high);
-		inthreads.push_back(tmp);
-	}
+	// vector<thread *> inthreads;
+	// for (int idx = num_processes/2; idx < num_processes; ++idx) {
+	// 	int i = idx - num_processes/2;
+	// 	int low = i * new_chunk;
+	// 	int high = min((i+1) * new_chunk, n/5);
+	// 	thread *tmp = new thread(insert_nodes, idx, &new_keys, low, high);
+	// 	inthreads.push_back(tmp);
+	// }
 
-	for (int i = 0; i < num_processes/2; ++i)
-		delthreads_2[i]->join();
-	for (int i = 0; i < num_processes/2; ++i)
-		inthreads[i]->join();
+	// for (int i = 0; i < num_processes/2; ++i)
+	// 	delthreads_2[i]->join();
+	// for (int i = 0; i < num_processes/2; ++i)
+	// 	inthreads[i]->join();
 
-	printf("Check round 3\n");
-	// Check - deleted threads should not be accessible
-	for (int i = 0; i < n/5; ++i) {
-		if(getNode(remain_keys[i]) != NULL)
-			printf("Key %d at position %d FOUND\n", remain_keys[i], i);
-	}
-	for (int i = n/5; i < n - n/5 - n/5; ++i) {
-		if(getNode(remain_keys[i]) == NULL)
-			printf("Old key %d at position %d not found\n", remain_keys[i], i);
-	}
-	for (int i = 0; i < n/5; ++i) {
-		if(getNode(new_keys[i]) == NULL)
-			printf("New key %d at position %d not found\n", new_keys[i], i);		
-	}
-	printf("Check round 3 Done\n");
+	// printf("Check round 3\n");
+	// // Check - deleted threads should not be accessible
+	// for (int i = 0; i < n/5; ++i) {
+	// 	if(getNode(remain_keys[i]) != NULL)
+	// 		printf("Key %d at position %d FOUND\n", remain_keys[i], i);
+	// }
+	// for (int i = n/5; i < n - n/5 - n/5; ++i) {
+	// 	if(getNode(remain_keys[i]) == NULL)
+	// 		printf("Old key %d at position %d not found\n", remain_keys[i], i);
+	// }
+	// for (int i = 0; i < n/5; ++i) {
+	// 	if(getNode(new_keys[i]) == NULL)
+	// 		printf("New key %d at position %d not found\n", new_keys[i], i);		
+	// }
+	// printf("Check round 3 Done\n");
 
 	return 0;
 }

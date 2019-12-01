@@ -159,6 +159,7 @@ pair<int, bool> tryDelete(int key, int tid) {
 
 	int weight = (n1->key == 0x7FFFFFFF or n0->key == 0x7FFFFFFF) ? 1 : n1->weight + n3->weight;
 	auto temp = new struct node;
+
 	initializeNode(temp, n3->key, weight, n3->left, n3->right);
 	bool scxStatus = GLOBAL_SCX->scxExecute(tid, (void * volatile *) (key < n0->key ? &n0->left:&n0->right), n1, temp);
 	if(scxStatus) return make_pair(0, weight > 1);
@@ -166,6 +167,7 @@ pair<int, bool> tryDelete(int key, int tid) {
 }
 
 pair<int, bool> tryInsert(int key, int tid, tr leaf, tr parent) {
+	// std::cout<<to_string(key) + "\n";
 
 	GLOBAL_SCX->scxInit(tid);
 
@@ -174,15 +176,15 @@ pair<int, bool> tryInsert(int key, int tid, tr leaf, tr parent) {
 	if(!GLOBAL_SCX->isSuccessfulLLXResult(parent0) || parent0 == GLOBAL_SCX->FINALIZED) return make_pair(-1, false);
 	GLOBAL_SCX->scxAddNode(tid, parent, false, parent0);
 
-	auto toChange = (void * volatile *) &parent->left;
+	auto toChange = (void * volatile *) &(parent->left);
 	if(leaf == parent->left) {}
-	else if(leaf == parent->right) toChange = (void * volatile *) &parent->right;  
+	else if(leaf == parent->right) toChange = (void * volatile *) &(parent->right);  
 	else return make_pair(-1, false);
 
 	auto leaf0 = GLOBAL_SCX->llx(tid, leaf);
 	// Double Check although the first function checks its finalized or not
 	if(!GLOBAL_SCX->isSuccessfulLLXResult(leaf0) || leaf0 == GLOBAL_SCX->FINALIZED) return make_pair(-1, false);
-	GLOBAL_SCX->scxAddNode(tid, leaf, true, leaf0);
+	GLOBAL_SCX->scxAddNode(tid, leaf, false, leaf0);
 
 	auto new1 = new struct node;
 	initializeNode(new1, key, 1, NULL, NULL);
@@ -199,10 +201,10 @@ pair<int, bool> tryInsert(int key, int tid, tr leaf, tr parent) {
 
 int insertKey(int key, int value, int tid) {
 	std::vector<tr> searchAns = searchTree(key);
-	std::pair<int, bool> answer = tryInsert(key, value, searchAns[2], searchAns[1]);
+	std::pair<int, bool> answer = tryInsert(key, tid, searchAns[2], searchAns[1]);
 	while(answer.first == -1) {
 		searchAns = searchTree(key);
-		answer = tryInsert(key, value, searchAns[2], searchAns[1]);
+		answer = tryInsert(key, tid, searchAns[2], searchAns[1]);
 	}
 
 	if(answer.second) {
