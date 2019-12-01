@@ -193,7 +193,7 @@ pair<int, bool> tryInsert(int key, int tid, tr leaf, tr parent) {
 	else initializeNode(new2, key, weight, leaf, new1);
 
 	bool scxStatus = GLOBAL_SCX->scxExecute(tid, toChange, leaf, new2);
-	if(scxStatus) return make_pair(0, weight > 1);
+	if(scxStatus) return make_pair(0, (weight == parent->weight) && (weight == 0));
 	else return make_pair(-1, false);
 }
 
