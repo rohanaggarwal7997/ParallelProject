@@ -240,7 +240,7 @@ int insertKey(int key, int value, int tid) {
 
 bool tryRebalance1(tr parent, tr node, int tid) {
 
-	if(parent == NULL) return false
+	if(parent == NULL) return false;
 	GLOBAL_SCX->scxInit(tid);
 	auto parent0 = GLOBAL_SCX->llx(tid, parent);
 	// Double Check although the first function checks its finalized or not
@@ -248,7 +248,7 @@ bool tryRebalance1(tr parent, tr node, int tid) {
 	GLOBAL_SCX->scxAddNode(tid, parent, false, parent0);
 
 	auto toChange = (void * volatile *) &(parent->left);
-	if(node == NULL) return false
+	if(node == NULL) return false;
 	if(node == parent->left) {}
 	else if(node == parent->right) toChange = (void * volatile *) &(parent->right);  
 	else return false;
@@ -294,7 +294,7 @@ bool tryRebalance1(tr parent, tr node, int tid) {
 
 bool tryRebalance4(tr parent, tr node, int tid) {
 
-	if(parent == NULL) return false
+	if(parent == NULL) return false;
 	GLOBAL_SCX->scxInit(tid);
 	auto parent0 = GLOBAL_SCX->llx(tid, parent);
 	// Double Check although the first function checks its finalized or not
@@ -302,7 +302,7 @@ bool tryRebalance4(tr parent, tr node, int tid) {
 	GLOBAL_SCX->scxAddNode(tid, parent, false, parent0);
 
 	auto toChange = (void * volatile *) &(parent->left);
-	if(node == NULL) return false
+	if(node == NULL) return false;
 	if(node == parent->left) {}
 	else if(node == parent->right) toChange = (void * volatile *) &(parent->right);  
 	else return false;
@@ -347,7 +347,7 @@ bool tryRebalance4(tr parent, tr node, int tid) {
 
 bool tryRebalance3A(tr parent, tr node, int tid) {
 
-	if(parent == NULL) return false
+	if(parent == NULL) return false;
 	GLOBAL_SCX->scxInit(tid);
 	auto parent0 = GLOBAL_SCX->llx(tid, parent);
 	// Double Check although the first function checks its finalized or not
@@ -355,7 +355,7 @@ bool tryRebalance3A(tr parent, tr node, int tid) {
 	GLOBAL_SCX->scxAddNode(tid, parent, false, parent0);
 
 	auto toChange = (void * volatile *) &(parent->left);
-	if(node == NULL) return false
+	if(node == NULL) return false;
 	if(node == parent->left) {}
 	else if(node == parent->right) toChange = (void * volatile *) &(parent->right);  
 	else return false;
@@ -369,6 +369,7 @@ bool tryRebalance3A(tr parent, tr node, int tid) {
 		return false;
 	}
 	auto nodeLeft = node->left;
+	auto nodeRight = node->right;
 	if(nodeRight->weight <= 0) return false;
 
 	auto nodeLeft0 = GLOBAL_SCX->llx(tid, nodeLeft);
@@ -401,7 +402,7 @@ bool tryRebalance3A(tr parent, tr node, int tid) {
 
 bool tryRebalance3B(tr parent, tr node, int tid) {
 
-	if(parent == NULL) return false
+	if(parent == NULL) return false;
 	GLOBAL_SCX->scxInit(tid);
 	auto parent0 = GLOBAL_SCX->llx(tid, parent);
 	// Double Check although the first function checks its finalized or not
@@ -409,7 +410,7 @@ bool tryRebalance3B(tr parent, tr node, int tid) {
 	GLOBAL_SCX->scxAddNode(tid, parent, false, parent0);
 
 	auto toChange = (void * volatile *) &(parent->right);
-	if(node == NULL) return false
+	if(node == NULL) return false;
 	if(node == parent->right) {}
 	else if(node == parent->left) toChange = (void * volatile *) &(parent->left);  
 	else return false;
@@ -423,6 +424,7 @@ bool tryRebalance3B(tr parent, tr node, int tid) {
 		return false;
 	}
 	auto noderight = node->right;
+	auto nodeleft = node->left;
 	if(nodeleft->weight <= 0) return false;
 
 	auto noderight0 = GLOBAL_SCX->llx(tid, noderight);
