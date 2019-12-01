@@ -9,8 +9,8 @@ using namespace std;
 
 typedef vector<int> vi;
 
-const int n = 10000;
-const int num_processes = 100;
+const int n = 1000000;
+const int num_processes = 10;
 
 
 void insert_nodes(int tid, vi *inKeys, int low, int high) {
@@ -22,9 +22,18 @@ void delete_nodes(int tid, vi *delKeys, int low, int high) {
 	for (int i = low; i < high; ++i)
 		deleteKey((*delKeys)[i], tid);
 }
+void rebalancingThreadFunction(int tid, std::atomic<bool> * continueRebalancing) {
+	while((*continueRebalancing) == true){
+		rebalancingThreadOperation(tid);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
+}
 
 int main(int argc, char const *argv[])
 {
+
+	// std::atomic<bool> continueRebalancing(true);
+
 	vi keys(n);	
 
 	for (int i = 0; i < n; ++i)
@@ -56,6 +65,8 @@ int main(int argc, char const *argv[])
 		runthreads.push_back(tmp);
 	}
 
+	// auto rebalancingThreadPointer = new thread(rebalancingThreadFunction, num_processes, &continueRebalancing);
+
 	// Join on the threads
 	for (int i = 0; i < num_processes; ++i)
 		runthreads[i]->join();
@@ -68,6 +79,9 @@ int main(int argc, char const *argv[])
 			printf("Key %d at posn %d not found", keys[i], i);
 	}
 	printf("Check round 1 Done\n");
+
+			rebalancingThreadOperation(0);
+
 
 	// Shuffle again
 	random_shuffle(keys.begin(), keys.end());
@@ -97,6 +111,9 @@ int main(int argc, char const *argv[])
 		delthreads[i]->join();
 	printf("Deletion done\n");
 
+			rebalancingThreadOperation(0);
+
+
 
 	printf("Check round 2\n");
 	for (int i = 0; i < n/5; ++i) {
@@ -110,6 +127,7 @@ int main(int argc, char const *argv[])
 			printf("Key %d at posn %d not found\n", remain_keys[i], i);
 	}
 	printf("Check round 2 Done\n");
+
 
 	// Shuffle remaining keys again
 	random_shuffle(remain_keys.begin(), remain_keys.end());
@@ -162,6 +180,12 @@ int main(int argc, char const *argv[])
 			printf("New key %d at position %d not found\n", new_keys[i], i);		
 	}
 	printf("Check round 3 Done\n");
+
+	// continueRebalancing = false;
+	// rebalancingThreadPointer->join();
+
+			rebalancingThreadOperation(0);
+	
 
 	return 0;
 }

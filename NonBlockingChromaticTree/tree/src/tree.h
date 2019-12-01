@@ -769,6 +769,8 @@ void rebalance(tr node, tr parent, int tid) {
 
 	int case2_leftright;
 	bool rebalanceSucceeded = true;
+	bool rebalanceRun = false;
+	int x = 0;
 
 	if(node == NULL)
 		return;
@@ -777,27 +779,51 @@ void rebalance(tr node, tr parent, int tid) {
 
 	if(node->left->weight == 0 && node->right->weight == 0 && (parent == GLOBAL_ROOT || node->weight > 0)) {
 		rebalanceSucceeded = tryRebalance1(parent, node, tid);
+		rebalanceRun = true;
+		x = 1;
 	} else if((case2_leftright = checkCase2(node)) != 0) {
 		if(case2_leftright == 1) {
 			rebalanceSucceeded = tryRebalance2A(parent, node, tid);
 		} else {
 			rebalanceSucceeded = tryRebalance2B(parent, node, tid);
 		}
+		x = 2;
+		rebalanceRun = true;
 	} else if((node->left->weight == 0 && node->left->right != NULL && node->left->right->weight == 0 && node->right->weight > 0) ) {
 		rebalanceSucceeded = tryRebalance3A(parent, node, tid);
+		rebalanceRun = true;
+		x = 3;
+
 	} else if((node->right->weight == 0 && node->right->left != NULL && node->right->left->weight == 0 && node->left->weight > 0)) {
 		rebalanceSucceeded = tryRebalance3B(parent, node, tid);
+		rebalanceRun = true;
+		x = 4;
+
 	} else if(checkCase4(node)) {
 		rebalanceSucceeded = tryRebalance4(parent, node, tid);
+		rebalanceRun = true;
+		x = 5;
+
 	} else if(node->left->weight > 1 && node->right->weight == 0 && !isLeaf(node->right) && node->right->left->weight > 0) {
-		rebalanceSucceeded = tryRebalance5A(parent, node, tid);		
+		rebalanceSucceeded = tryRebalance5A(parent, node, tid);	
+		rebalanceRun = true;
+		x = 6;
+
 	} else if(node->right->weight > 1 && node->left->weight == 0 && !isLeaf(node->left) && node->left->right->weight > 0) {
-		rebalanceSucceeded = tryRebalance5B(parent, node, tid);			
+		rebalanceSucceeded = tryRebalance5B(parent, node, tid);
+		rebalanceRun = true;
+		x = 7;
+
 	}
 
 	if(rebalanceSucceeded) {
+		if(rebalanceRun) {
+			std::cout<<"Rebalance Succeeded"+to_string(x)+"\n";
+		}
 		rebalance(node->left, node);
 		rebalance(node->right, node);
+	} else {
+		std::cout<<"Rebalance Failed \n";
 	}
 }
 
