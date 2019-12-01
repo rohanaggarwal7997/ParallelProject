@@ -169,6 +169,7 @@ pair<int, bool> tryDelete(int key, int tid) {
 pair<int, bool> tryInsert(int key, int tid, tr leaf, tr parent) {
 	// std::cout<<to_string(key) + "\n";
 
+	if(parent == NULL) return make_pair(-1, false);
 	GLOBAL_SCX->scxInit(tid);
 	auto parent0 = GLOBAL_SCX->llx(tid, parent);
 	// Double Check although the first function checks its finalized or not
@@ -176,6 +177,7 @@ pair<int, bool> tryInsert(int key, int tid, tr leaf, tr parent) {
 	GLOBAL_SCX->scxAddNode(tid, parent, false, parent0);
 
 	auto toChange = (void * volatile *) &(parent->left);
+	if(leaf == NULL) return make_pair(-1, false);
 	if(leaf == parent->left) {}
 	else if(leaf == parent->right) toChange = (void * volatile *) &(parent->right);  
 	else return make_pair(-1, false);
@@ -236,3 +238,219 @@ int insertKey(int key, int value, int tid) {
 // 	}
 // }
 
+bool tryRebalance1(tr parent, tr node, int tid) {
+
+	if(parent == NULL) return false
+	GLOBAL_SCX->scxInit(tid);
+	auto parent0 = GLOBAL_SCX->llx(tid, parent);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(parent0) || parent0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, parent, false, parent0);
+
+	auto toChange = (void * volatile *) &(parent->left);
+	if(node == NULL) return false
+	if(node == parent->left) {}
+	else if(node == parent->right) toChange = (void * volatile *) &(parent->right);  
+	else return false;
+
+	auto node0 = GLOBAL_SCX->llx(tid, node);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(node0) || node0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, node, true, node0);
+
+	if(node->weight <= 0) return false;
+	if(node->left == NULL || node->right == NULL) {
+		return false;
+	}
+
+	auto nodeLeft = node->left;
+	auto nodeRight = node->right;
+
+	auto nodeLeft0 = GLOBAL_SCX->llx(tid, nodeLeft);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(nodeLeft0) || nodeLeft0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, nodeLeft, true, nodeLeft0);
+
+	if(nodeLeft->weight != 0) return false;
+
+	auto nodeRight0 = GLOBAL_SCX->llx(tid, nodeRight);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(nodeRight0) || nodeRight0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, nodeRight, true, nodeRight0);	
+
+	if(nodeRight->weight != 0) return false;
+
+
+	auto newNode = new struct node;
+	auto newLeft = new struct node;
+	auto newRight = new struct node;
+	
+	initializeNode(newNode, node->key, node->weight - 1, newLeft, newRight);
+	initializeNode(newLeft, nodeLeft->key, 1, nodeLeft->left, nodeLeft->right);
+	initializeNode(newRight, nodeRight->key, 1, nodeRight->left, nodeRight->right);
+	bool scxStatus = GLOBAL_SCX->scxExecute(tid, toChange, node, newNode);
+	return scxStatus;
+}
+
+bool tryRebalance4(tr parent, tr node, int tid) {
+
+	if(parent == NULL) return false
+	GLOBAL_SCX->scxInit(tid);
+	auto parent0 = GLOBAL_SCX->llx(tid, parent);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(parent0) || parent0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, parent, false, parent0);
+
+	auto toChange = (void * volatile *) &(parent->left);
+	if(node == NULL) return false
+	if(node == parent->left) {}
+	else if(node == parent->right) toChange = (void * volatile *) &(parent->right);  
+	else return false;
+
+	auto node0 = GLOBAL_SCX->llx(tid, node);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(node0) || node0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, node, true, node0);
+
+	if(node->weight <= 0) return false;
+	if(node->left == NULL || node->right == NULL) {
+		return false;
+	}
+
+	auto nodeLeft = node->left;
+	auto nodeRight = node->right;
+
+	auto nodeLeft0 = GLOBAL_SCX->llx(tid, nodeLeft);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(nodeLeft0) || nodeLeft0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, nodeLeft, true, nodeLeft0);
+
+
+	auto nodeRight0 = GLOBAL_SCX->llx(tid, nodeRight);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(nodeRight0) || nodeRight0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, nodeRight, true, nodeRight0);	
+
+	if((nodeLeft->weight > 1 && nodeRight->weight > 0) || (nodeRight->weight > 1 && nodeLeft->weight > 0)) {}
+	else return false;
+
+
+	auto newNode = new struct node;
+	auto newLeft = new struct node;
+	auto newRight = new struct node;
+	
+	initializeNode(newNode, node->key, node->weight + 1, newLeft, newRight);
+	initializeNode(newLeft, nodeLeft->key, nodeLeft->weight - 1, nodeLeft->left, nodeLeft->right);
+	initializeNode(newRight, nodeRight->key, nodeRight->weight - 1, nodeRight->left, nodeRight->right);
+	bool scxStatus = GLOBAL_SCX->scxExecute(tid, toChange, node, newNode);
+	return scxStatus;
+}
+
+bool tryRebalance3A(tr parent, tr node, int tid) {
+
+	if(parent == NULL) return false
+	GLOBAL_SCX->scxInit(tid);
+	auto parent0 = GLOBAL_SCX->llx(tid, parent);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(parent0) || parent0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, parent, false, parent0);
+
+	auto toChange = (void * volatile *) &(parent->left);
+	if(node == NULL) return false
+	if(node == parent->left) {}
+	else if(node == parent->right) toChange = (void * volatile *) &(parent->right);  
+	else return false;
+
+	auto node0 = GLOBAL_SCX->llx(tid, node);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(node0) || node0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, node, true, node0);
+
+	if(node->weight <= 0) return false;
+	if(node->left == NULL || node->right == NULL) {
+		return false;
+	}
+	auto nodeLeft = node->left;
+	if(nodeRight->weight <= 0) return false;
+
+	auto nodeLeft0 = GLOBAL_SCX->llx(tid, nodeLeft);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(nodeLeft0) || nodeLeft0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, nodeLeft, true, nodeLeft0);
+
+	if(nodeLeft->weight != 0) return false;
+	if(nodeLeft->left == NULL || nodeLeft->right == NULL) return false;
+
+	auto nodeLeftRight = nodeLeft->right;
+	auto nodeLeftRight0 = GLOBAL_SCX->llx(tid, nodeLeftRight);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(nodeLeftRight0) || nodeLeftRight0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, nodeLeftRight, true, nodeLeftRight0);
+
+	if(nodeLeftRight->weight != 0) return false;
+
+	auto newNode = new struct node;
+	auto newLeft = new struct node;
+	auto newRight = new struct node;
+	
+	initializeNode(newNode, nodeLeftRight->key, node->weight, newLeft, newRight);
+	initializeNode(newLeft, nodeLeft->key, 0, nodeLeft->left, nodeLeftRight->left);
+	initializeNode(newRight, node->key, 0, nodeLeftRight->right, node->right);
+	bool scxStatus = GLOBAL_SCX->scxExecute(tid, toChange, node, newNode);
+	return scxStatus;
+}
+
+
+bool tryRebalance3B(tr parent, tr node, int tid) {
+
+	if(parent == NULL) return false
+	GLOBAL_SCX->scxInit(tid);
+	auto parent0 = GLOBAL_SCX->llx(tid, parent);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(parent0) || parent0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, parent, false, parent0);
+
+	auto toChange = (void * volatile *) &(parent->right);
+	if(node == NULL) return false
+	if(node == parent->right) {}
+	else if(node == parent->left) toChange = (void * volatile *) &(parent->left);  
+	else return false;
+
+	auto node0 = GLOBAL_SCX->llx(tid, node);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(node0) || node0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, node, true, node0);
+
+	if(node->weight <= 0) return false;
+	if(node->right == NULL || node->left == NULL) {
+		return false;
+	}
+	auto noderight = node->right;
+	if(nodeleft->weight <= 0) return false;
+
+	auto noderight0 = GLOBAL_SCX->llx(tid, noderight);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(noderight0) || noderight0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, noderight, true, noderight0);
+
+	if(noderight->weight != 0) return false;
+	if(noderight->right == NULL || noderight->left == NULL) return false;
+
+	auto noderightleft = noderight->left;
+	auto noderightleft0 = GLOBAL_SCX->llx(tid, noderightleft);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(noderightleft0) || noderightleft0 == GLOBAL_SCX->FINALIZED) return false;
+	GLOBAL_SCX->scxAddNode(tid, noderightleft, true, noderightleft0);
+
+	if(noderightleft->weight != 0) return false;
+
+	auto newNode = new struct node;
+	auto newright = new struct node;
+	auto newleft = new struct node;
+	
+	initializeNode(newNode, noderightleft->key, node->weight, newright, newleft);
+	initializeNode(newright, noderight->key, 0, noderight->right, noderightleft->right);
+	initializeNode(newleft, node->key, 0, noderightleft->left, node->left);
+	bool scxStatus = GLOBAL_SCX->scxExecute(tid, toChange, node, newNode);
+	return scxStatus;
+}
