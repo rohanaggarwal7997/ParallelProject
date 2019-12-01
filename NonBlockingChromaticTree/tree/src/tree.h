@@ -312,7 +312,6 @@ bool tryRebalance4(tr parent, tr node, int tid) {
 	if(!GLOBAL_SCX->isSuccessfulLLXResult(node0) || node0 == GLOBAL_SCX->FINALIZED) return false;
 	GLOBAL_SCX->scxAddNode(tid, node, true, node0);
 
-	if(node->weight <= 0) return false;
 	if(node->left == NULL || node->right == NULL) {
 		return false;
 	}
@@ -366,7 +365,6 @@ bool tryRebalance3A(tr parent, tr node, int tid) {
 	if(!GLOBAL_SCX->isSuccessfulLLXResult(node0) || node0 == GLOBAL_SCX->FINALIZED) return false;
 	GLOBAL_SCX->scxAddNode(tid, node, true, node0);
 
-	if(node->weight <= 0) return false;
 	if(node->left == NULL || node->right == NULL) {
 		return false;
 	}
@@ -421,7 +419,6 @@ bool tryRebalance3B(tr parent, tr node, int tid) {
 	if(!GLOBAL_SCX->isSuccessfulLLXResult(node0) || node0 == GLOBAL_SCX->FINALIZED) return false;
 	GLOBAL_SCX->scxAddNode(tid, node, true, node0);
 
-	if(node->weight <= 0) return false;
 	if(node->right == NULL || node->left == NULL) {
 		return false;
 	}
