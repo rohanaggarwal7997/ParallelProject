@@ -725,3 +725,74 @@ bool tryRebalance5B(tr parent, tr v, int tid) {
 	return scxStatus;
 
 }
+
+bool checkCase4(tr node) {
+	bool check1 = (node->left->weight > 1) && (node->right->weight > 0);
+	bool check2 = (node->left->weight > 0) && (node->right->weight > 1);
+
+	return check1 || check2; 
+}
+// 0 - no case
+// 1  - on left
+// 2 - on right
+// Incoming is NOT leaf node
+int checkCase2(tr node) {
+
+	bool leftCheck = (!isLeaf(node->left)) && 
+					 (node->left->weight == 0) && 
+					 (node->left->left->weight == 0) && 
+					 (node->right->weight > 0);
+
+	bool rightCheck = (!isLeaf(node->right)) && 
+					 (node->right->weight == 0) && 
+					 (node->right->right->weight == 0) && 
+					 (node->left->weight > 0);
+
+	if(leftCheck)
+		return 1;
+	else if(rightCheck)
+		return 2;
+	else
+		return 0;
+
+}
+
+void rebalance(tr node, tr parent, int tid) {
+
+	int case2_leftright;
+	bool rebalanceSucceeded = true;
+
+	if(node == NULL)
+		return;
+
+	if(node->left == NULL && node->right == NULL) return; 
+
+	if(node->left->weight == 0 && node->right->weight == 0 && (parent == GLOBAL_ROOT || node->weight > 0)) {
+		rebalanceSucceeded = tryRebalance1(parent, node, tid);
+	} else if((case2_leftright = checkCase2(node)) != 0) {
+		if(case2_leftright == 1) {
+			rebalanceSucceeded = tryRebalance2A(parent, node, tid);
+		} else {
+			rebalanceSucceeded = tryRebalance2B(parent, node, tid);
+		}
+	} else if((node->left->weight == 0 && node->left->right != NULL && node->left->right->weight == 0 && node->right->weight > 0) ) {
+		rebalanceSucceeded = tryRebalance3A(parent, node, tid);
+	} else if((node->right->weight == 0 && node->right->left != NULL && node->right->left->weight == 0 && node->left->weight > 0)) {
+		rebalanceSucceeded = tryRebalance3B(parent, node, tid);
+	} else if(checkCase4(node)) {
+		rebalanceSucceeded = tryRebalance4(parent, node, tid);
+	} else if(node->left->weight > 1 && node->right->weight == 0 && !isLeaf(node->right) && node->right->left->weight > 0) {
+		rebalanceSucceeded = tryRebalance5A(parent, node, tid);		
+	} else if(node->right->weight > 1 && node->left->weight == 0 && !isLeaf(node->left) && node->left->right->weight > 0) {
+		rebalanceSucceeded = tryRebalance5B(parent, node, tid);			
+	}
+
+	if(rebalanceSucceeded) {
+		rebalance(node->left, node);
+		rebalance(node->right, node);
+	}
+}
+
+void rebalancingThreadOperation(int tid) {
+	rebalance(GLOBAL_ROOT->left, GLOBAL_ROOT, tid);
+}
