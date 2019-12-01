@@ -467,6 +467,8 @@ bool tryRebalance2A(tr parent, tr v, int tid) {
 
 	// Pointer to be changed
 	auto toChange = (void * volatile *) &(parent->left);
+	if(v == NULL)
+		return false;
 	if(v == parent->left) {}
 	else if(v == parent->right) toChange = (void * volatile *) &(parent->right);  
 	else return false;
@@ -527,6 +529,8 @@ bool tryRebalance2B(tr parent, tr v, int tid) {
 
 	// Pointer to be changed
 	auto toChange = (void * volatile *) &(parent->left);
+	if(v == NULL)
+		return false;
 	if(v == parent->left) {}
 	else if(v == parent->right) toChange = (void * volatile *) &(parent->right);  
 	else return false;
@@ -587,6 +591,8 @@ bool tryRebalance5A(tr parent, tr v, int tid) {
 
 	// Pointer to be changed
 	auto toChange = (void * volatile *) &(parent->left);
+	if(v == NULL)
+		return false;
 	if(v == parent->left) {}
 	else if(v == parent->right) toChange = (void * volatile *) &(parent->right);  
 	else return false;
@@ -663,6 +669,8 @@ bool tryRebalance5B(tr parent, tr v, int tid) {
 
 	// Pointer to be changed
 	auto toChange = (void * volatile *) &(parent->left);
+	if(v == NULL)
+		return false;
 	if(v == parent->left) {}
 	else if(v == parent->right) toChange = (void * volatile *) &(parent->right);  
 	else return false;
