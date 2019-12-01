@@ -115,7 +115,7 @@ pair<int, bool> tryDelete(int key, int tid) {
 	GLOBAL_SCX->scxInit(tid);
 
 	if(n0 == NULL) {
-		return make_pair(0, false);
+		return make_pair(-1, false);
 	}
 	auto s0 = GLOBAL_SCX->llx(tid, n0);
 	// Double Check although the first function checks its finalized or not
@@ -124,7 +124,7 @@ pair<int, bool> tryDelete(int key, int tid) {
 
 	tr n1 = key < n0->key ? n0->left : n0->right;
 	if(n1 == NULL) {
-		return make_pair(0, false);
+		return make_pair(-1, false);
 	}
 	auto s1 = GLOBAL_SCX->llx(tid, n1);
 	if(!GLOBAL_SCX->isSuccessfulLLXResult(s1) || s1 == GLOBAL_SCX->FINALIZED) return make_pair(-1, false);
@@ -133,7 +133,7 @@ pair<int, bool> tryDelete(int key, int tid) {
 
 	tr n2 = key < n1->key ? n1->left : n1->right;
 	if(n2 == NULL) {
-		return make_pair(0, false);
+		return make_pair(-1, false);
 	}
 	if(n2->key != key) {
 		return make_pair(0, false);
@@ -144,7 +144,7 @@ pair<int, bool> tryDelete(int key, int tid) {
 
 	tr n3 = key < n1->key ? n1->right : n1->left;
 	if(n3 == NULL) {
-		return make_pair(0, false);
+		return make_pair(-1, false);
 	}
 	auto s3 = GLOBAL_SCX->llx(tid, n3);
 	if(!GLOBAL_SCX->isSuccessfulLLXResult(s3) || s3 == GLOBAL_SCX->FINALIZED) return make_pair(-1, false);
@@ -157,7 +157,7 @@ pair<int, bool> tryDelete(int key, int tid) {
 		GLOBAL_SCX->scxAddNode(tid, n2, true, s2);
 	}
 
-	int weight = (n1->key == 0x7FFFFFFF or n0->key == 0x7FFFFFFF) ? 1 : n1->weight + n3->weight;
+	int weight = (n1->key == 0x7FFFFFFF || n0->key == 0x7FFFFFFF) ? 1 : n1->weight + n3->weight;
 	auto temp = new struct node;
 
 	initializeNode(temp, n3->key, weight, n3->left, n3->right);
@@ -170,7 +170,6 @@ pair<int, bool> tryInsert(int key, int tid, tr leaf, tr parent) {
 	// std::cout<<to_string(key) + "\n";
 
 	GLOBAL_SCX->scxInit(tid);
-
 	auto parent0 = GLOBAL_SCX->llx(tid, parent);
 	// Double Check although the first function checks its finalized or not
 	if(!GLOBAL_SCX->isSuccessfulLLXResult(parent0) || parent0 == GLOBAL_SCX->FINALIZED) return make_pair(-1, false);

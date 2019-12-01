@@ -10,7 +10,7 @@ using namespace std;
 typedef vector<int> vi;
 
 const int n = 10000;
-const int num_processes = 10;
+const int num_processes = 100;
 
 
 void insert_nodes(int tid, vi *inKeys, int low, int high) {
@@ -50,7 +50,10 @@ int main(int argc, char const *argv[])
 	printf("Commence insertion\n");
 	for (int i = 0; i < num_processes; ++i) {
 		int low = i * chunksize;
-		int high = min((i+1) * chunksize, n);
+		int high = (i+1) * chunksize;
+		if(i == num_processes - 1) {
+			high = max((i+1) * chunksize, n);
+		} 
 		thread *tmp = new thread(insert_nodes, i, &keys, low, high);
 		runthreads.push_back(tmp);
 	}
@@ -84,7 +87,10 @@ int main(int argc, char const *argv[])
 	vector<thread *> delthreads;
 	for (int i = 0; i < num_processes; ++i) {
 		int low = i * del_chunk;
-		int high = min((i+1) * del_chunk, (3*n)/4);
+		int high = (i+1) * del_chunk;
+		if(i == num_processes - 1) {
+			high =  (3*n)/4;
+		} 
 		thread* tmp = new thread(delete_nodes, i, &keys, low, high);
 		delthreads.push_back(tmp);
 	}
