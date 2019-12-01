@@ -222,7 +222,7 @@ int insertKey(int key, int value, int tid) {
 // 		n3 = GLOBAL_ROOT->left;
 
 // 		while(1) {
-// 			if(n3->weight > 1 || (n2->weight == 0 || n3->weight == 0)) {
+// 			if(n3->weight > 1 || (n2->weight == 0 && n3->weight == 0)) {
 // 				// Weight or Red Red Violation
 // 				tryRebalance(n0, n1, n2, n3);
 // 				break; /*Search Again from Top*/
