@@ -17,15 +17,10 @@ typedef struct node {
 } * tr;
 
 tr GLOBAL_ROOT;
-SCXProvider<node, 10> * GLOBAL_SCX;
+SCXProvider<node, 100> * GLOBAL_SCX;
 
 pair<int, bool> tryDelete(int key, int tid);
 
-
-
-void rebalance(tr node, tr parent) {
-	return;
-}
 
 void initializeNode(tr x, int key, int weight, tr left, tr right) {
 
@@ -50,7 +45,7 @@ void init(int num_processes) {
 	GLOBAL_ROOT->right->right = NULL;
 	GLOBAL_ROOT->left->weight = 1;
 	GLOBAL_ROOT->right->weight = 1;
-	GLOBAL_SCX = new SCXProvider<node, 10>(num_processes);
+	GLOBAL_SCX = new SCXProvider<node, 100>(num_processes);
 
 
 	GLOBAL_SCX->initNode(GLOBAL_ROOT);
@@ -61,7 +56,7 @@ void init(int num_processes) {
 
 // NOTE - the input to this can NOT be null!!
 bool isLeaf(tr node) {
-	return node->left == NULL && node->right == NULL;
+	return node->left == NULL || node->right == NULL;
 }
 
 
@@ -258,7 +253,7 @@ bool tryRebalance1(tr parent, tr node, int tid) {
 	if(!GLOBAL_SCX->isSuccessfulLLXResult(node0) || node0 == GLOBAL_SCX->FINALIZED) return false;
 	GLOBAL_SCX->scxAddNode(tid, node, true, node0);
 
-	if(node->weight <= 0) return false;
+	if(node->weight <= 0 && parent != GLOBAL_ROOT->left) return false;
 	if(node->left == NULL || node->right == NULL) {
 		return false;
 	}
@@ -456,37 +451,48 @@ bool tryRebalance3B(tr parent, tr node, int tid) {
 
 bool tryRebalance2A(tr parent, tr v, int tid) {
 	
-	if(parent == NULL)
+	if(parent == NULL) {
 		return false;
+
+	}
 	GLOBAL_SCX->scxInit(tid);
 	auto parent0 = GLOBAL_SCX->llx(tid, parent);
 	// Double Check although the first function checks its finalized or not
-	if(!GLOBAL_SCX->isSuccessfulLLXResult(parent0) || parent0 == GLOBAL_SCX->FINALIZED)
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(parent0) || parent0 == GLOBAL_SCX->FINALIZED) {
 		return false;
+	}
 	GLOBAL_SCX->scxAddNode(tid, parent, false, parent0);	
 
 	// Pointer to be changed
 	auto toChange = (void * volatile *) &(parent->left);
-	if(v == NULL)
+	if(v == NULL){
 		return false;
+	}
+	auto v0 = GLOBAL_SCX->llx(tid, v);
+	// Double Check although the first function checks its finalized or not
+	if(!GLOBAL_SCX->isSuccessfulLLXResult(v0) || v0 == GLOBAL_SCX->FINALIZED) 
+	{
+		if(v0 == GLOBAL_SCX->FINALIZED) std::cout<<"Finalized";
+		std::cout<<"Here";
+		return false;
+	}
+	GLOBAL_SCX->scxAddNode(tid, v, true, v0);
 	if(v == parent->left) {}
 	else if(v == parent->right) toChange = (void * volatile *) &(parent->right);  
 	else return false;
 
-	auto v0 = GLOBAL_SCX->llx(tid, v);
-	// Double Check although the first function checks its finalized or not
-	if(!GLOBAL_SCX->isSuccessfulLLXResult(v0) || v0 == GLOBAL_SCX->FINALIZED) 
-		return false;
-	GLOBAL_SCX->scxAddNode(tid, v, true, v0);
 
 	// First mirror case
 	tr C = v->right;
-	if((C == NULL) || (C != NULL && C->weight == 0))
+	if((C == NULL) || (C != NULL && C->weight == 0)){
 		return false;
+	}
 
 	tr u = v->left;
-	if(u == NULL || u->weight != 0)
+	if(u == NULL || u->weight != 0) {
+
 		return false;
+	}
 
 	auto u0 = GLOBAL_SCX->llx(tid, u);
 	// Double Check although the first function checks its finalized or not
@@ -503,7 +509,7 @@ bool tryRebalance2A(tr parent, tr v, int tid) {
 	auto u2 = new struct node;
 	auto v2 = new struct node;
 	
-	initializeNode(u2, u->key, v->weight, A, v);
+	initializeNode(u2, u->key, v->weight, A, v2);
 	initializeNode(v2, v->key, u->weight, B, C);
 
 	bool scxStatus = GLOBAL_SCX->scxExecute(tid, toChange, v, u2);
@@ -565,7 +571,7 @@ bool tryRebalance2B(tr parent, tr v, int tid) {
 	auto u2 = new struct node;
 	auto v2 = new struct node;
 	
-	initializeNode(u2, u->key, v->weight, v, A);
+	initializeNode(u2, u->key, v->weight, v2, A);
 	initializeNode(v2, v->key, u->weight, C, B);
 
 	bool scxStatus = GLOBAL_SCX->scxExecute(tid, toChange, v, u2);
@@ -765,8 +771,8 @@ int checkCase2(tr node) {
 
 }
 
-void rebalance(tr node, tr parent, int tid) {
-
+void rebalance(tr node, tr parent, int tid, int recDepth) {
+	if(recDepth == 100) return;
 	int case2_leftright;
 	bool rebalanceSucceeded = true;
 	bool rebalanceRun = false;
@@ -777,17 +783,20 @@ void rebalance(tr node, tr parent, int tid) {
 
 	if(node->left == NULL && node->right == NULL) return; 
 
-	if(node->left->weight == 0 && node->right->weight == 0 && (parent == GLOBAL_ROOT || node->weight > 0)) {
+	bool isLeft = parent->left == node;
+
+	if(node->left->weight == 0 && node->right->weight == 0 && (parent == GLOBAL_ROOT->left || node->weight > 0)) {
 		rebalanceSucceeded = tryRebalance1(parent, node, tid);
 		rebalanceRun = true;
 		x = 1;
 	} else if((case2_leftright = checkCase2(node)) != 0) {
 		if(case2_leftright == 1) {
 			rebalanceSucceeded = tryRebalance2A(parent, node, tid);
+			x = 21;
 		} else {
 			rebalanceSucceeded = tryRebalance2B(parent, node, tid);
+			// x = 22;
 		}
-		x = 2;
 		rebalanceRun = true;
 	} else if((node->left->weight == 0 && node->left->right != NULL && node->left->right->weight == 0 && node->right->weight > 0) ) {
 		rebalanceSucceeded = tryRebalance3A(parent, node, tid);
@@ -816,17 +825,25 @@ void rebalance(tr node, tr parent, int tid) {
 
 	}
 
-	if(rebalanceSucceeded) {
-		if(rebalanceRun) {
+	if(rebalanceRun) {
+		if(rebalanceSucceeded) {
 			std::cout<<"Rebalance Succeeded"+to_string(x)+"\n";
+		} else {
+			std::cout<<"Rebalance Failed \n"+to_string(x)+"\n";
 		}
-		rebalance(node->left, node);
-		rebalance(node->right, node);
 	} else {
-		std::cout<<"Rebalance Failed \n";
+		if(isLeft) {
+			rebalance(parent->left->left, parent->left, tid, recDepth + 1);
+			rebalance(parent->left->right, parent->left, tid, recDepth + 1);
+		} else {
+			rebalance(parent->right->left, parent->right, tid, recDepth + 1);
+			rebalance(parent->right->right, parent->right, tid, recDepth + 1);
+		}
 	}
 }
 
 void rebalancingThreadOperation(int tid) {
-	rebalance(GLOBAL_ROOT->left, GLOBAL_ROOT, tid);
+	rebalance(GLOBAL_ROOT->left->left, GLOBAL_ROOT->left, tid, 0);
+	rebalance(GLOBAL_ROOT->left->right, GLOBAL_ROOT->left, tid, 0);
+
 }
