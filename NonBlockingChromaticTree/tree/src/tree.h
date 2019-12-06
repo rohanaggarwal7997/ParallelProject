@@ -472,8 +472,6 @@ bool tryRebalance2A(tr parent, tr v, int tid) {
 	// Double Check although the first function checks its finalized or not
 	if(!GLOBAL_SCX->isSuccessfulLLXResult(v0) || v0 == GLOBAL_SCX->FINALIZED) 
 	{
-		if(v0 == GLOBAL_SCX->FINALIZED) std::cout<<"Finalized";
-		std::cout<<"Here";
 		return false;
 	}
 	GLOBAL_SCX->scxAddNode(tid, v, true, v0);
@@ -490,7 +488,6 @@ bool tryRebalance2A(tr parent, tr v, int tid) {
 
 	tr u = v->left;
 	if(u == NULL || u->weight != 0) {
-
 		return false;
 	}
 
@@ -771,13 +768,10 @@ int checkCase2(tr node) {
 
 }
 
-void rebalance(tr node, tr parent, int tid, int recDepth) {
-	if(recDepth == 100) return;
+void rebalance(tr node, tr parent, int tid) {
 	int case2_leftright;
 	bool rebalanceSucceeded = true;
 	bool rebalanceRun = false;
-	int x = 0;
-
 	if(node == NULL)
 		return;
 
@@ -788,62 +782,49 @@ void rebalance(tr node, tr parent, int tid, int recDepth) {
 	if(node->left->weight == 0 && node->right->weight == 0 && (parent == GLOBAL_ROOT->left || node->weight > 0)) {
 		rebalanceSucceeded = tryRebalance1(parent, node, tid);
 		rebalanceRun = true;
-		x = 1;
 	} else if((case2_leftright = checkCase2(node)) != 0) {
 		if(case2_leftright == 1) {
 			rebalanceSucceeded = tryRebalance2A(parent, node, tid);
-			x = 21;
 		} else {
 			rebalanceSucceeded = tryRebalance2B(parent, node, tid);
-			// x = 22;
 		}
 		rebalanceRun = true;
 	} else if((node->left->weight == 0 && node->left->right != NULL && node->left->right->weight == 0 && node->right->weight > 0) ) {
 		rebalanceSucceeded = tryRebalance3A(parent, node, tid);
 		rebalanceRun = true;
-		x = 3;
-
 	} else if((node->right->weight == 0 && node->right->left != NULL && node->right->left->weight == 0 && node->left->weight > 0)) {
 		rebalanceSucceeded = tryRebalance3B(parent, node, tid);
 		rebalanceRun = true;
-		x = 4;
-
 	} else if(checkCase4(node)) {
 		rebalanceSucceeded = tryRebalance4(parent, node, tid);
 		rebalanceRun = true;
-		x = 5;
-
 	} else if(node->left->weight > 1 && node->right->weight == 0 && !isLeaf(node->right) && node->right->left->weight > 0) {
 		rebalanceSucceeded = tryRebalance5A(parent, node, tid);	
 		rebalanceRun = true;
-		x = 6;
-
 	} else if(node->right->weight > 1 && node->left->weight == 0 && !isLeaf(node->left) && node->left->right->weight > 0) {
 		rebalanceSucceeded = tryRebalance5B(parent, node, tid);
 		rebalanceRun = true;
-		x = 7;
-
 	}
 
 	if(rebalanceRun) {
-		if(rebalanceSucceeded) {
-			std::cout<<"Rebalance Succeeded"+to_string(x)+"\n";
-		} else {
-			std::cout<<"Rebalance Failed \n"+to_string(x)+"\n";
-		}
+		// if(rebalanceSucceeded) {
+		// 	// std::cout<<"Rebalance Succeeded"+to_string(x)+"\n";
+		// } else {
+		// 	// std::cout<<"Rebalance Failed \n"+to_string(x)+"\n";
+		// }
 	} else {
 		if(isLeft) {
-			rebalance(parent->left->left, parent->left, tid, recDepth + 1);
-			rebalance(parent->left->right, parent->left, tid, recDepth + 1);
+			rebalance(parent->left->left, parent->left, tid);
+			rebalance(parent->left->right, parent->left, tid);
 		} else {
-			rebalance(parent->right->left, parent->right, tid, recDepth + 1);
-			rebalance(parent->right->right, parent->right, tid, recDepth + 1);
+			rebalance(parent->right->left, parent->right, tid);
+			rebalance(parent->right->right, parent->right, tid);
 		}
 	}
 }
 
 void rebalancingThreadOperation(int tid) {
-	rebalance(GLOBAL_ROOT->left->left, GLOBAL_ROOT->left, tid, 0);
-	rebalance(GLOBAL_ROOT->left->right, GLOBAL_ROOT->left, tid, 0);
+	rebalance(GLOBAL_ROOT->left->left, GLOBAL_ROOT->left, tid);
+	rebalance(GLOBAL_ROOT->left->right, GLOBAL_ROOT->left, tid);
 
 }

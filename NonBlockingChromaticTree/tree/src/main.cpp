@@ -12,7 +12,7 @@ using namespace std;
 typedef vector<int> vi;
 
 const int n = 1000000;
-const int num_processes = 10;
+const int num_processes = 8;
 
 void check_balance(tr node, vi& heights, vi& leaf_wts, vi &real_hts, int level, int true_level);
 
@@ -28,7 +28,7 @@ void delete_nodes(int tid, vi *delKeys, int low, int high) {
 void rebalancingThreadFunction(int tid, std::atomic<bool> * continueRebalancing) {
 	while((*continueRebalancing) == true){
 		rebalancingThreadOperation(tid);
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 }
 
@@ -43,7 +43,7 @@ int main(int argc, char const *argv[])
 		keys[i] = i;	
 
 	// Initialize tree
-	init(num_processes+1);
+	init(num_processes+4);
 	
 	// Shuffle keys
 	// Insert keys in parallel 
@@ -53,8 +53,6 @@ int main(int argc, char const *argv[])
 	vector<thread *> runthreads;
 
 	int chunksize = n / num_processes;
-
-
 
 	// PARALLEL
 	printf("Commence insertion\n");
@@ -70,6 +68,9 @@ int main(int argc, char const *argv[])
 	}
 
 	auto rebalancingThreadPointer = new thread(rebalancingThreadFunction, num_processes, &continueRebalancing);
+	auto rebalancingThreadPointer2 = new thread(rebalancingThreadFunction, num_processes+1, &continueRebalancing);
+	auto rebalancingThreadPointer3 = new thread(rebalancingThreadFunction, num_processes+2, &continueRebalancing);
+	auto rebalancingThreadPointer4 = new thread(rebalancingThreadFunction, num_processes+3, &continueRebalancing);
 
 	// Join on the threads
 	for (int i = 0; i < num_processes; ++i)
@@ -88,9 +89,6 @@ int main(int argc, char const *argv[])
 			printf("Key %d at posn %d not found", keys[i], i);
 	}
 	printf("Check round 1 Done\n");
-
-			// rebalancingThreadOperation(0);
-
 
 	// Shuffle again
 	random_shuffle(keys.begin(), keys.end());
@@ -126,9 +124,7 @@ int main(int argc, char const *argv[])
 	cout << "Time taken by deletion: "
          << duration.count() << " microseconds" << endl; 
 
-			// rebalancingThreadOperation(0);
-
-
+	// rebalancingThreadOperation(0);
 
 	printf("Check round 2\n");
 	for (int i = 0; i < n/5; ++i) {
@@ -219,10 +215,18 @@ int main(int argc, char const *argv[])
 	}
 	printf("Check round 3 Done\n");
 
+
+
+	printf("Sleeping To Let threads complete the Rebalancings\n");	
+	std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+	printf("Woke up\n");	
+
+
 	continueRebalancing = false;
 	rebalancingThreadPointer->join();
-
-			// rebalancingThreadOperation(0);
+	rebalancingThreadPointer2->join();
+	rebalancingThreadPointer3->join();
+	rebalancingThreadPointer4->join();
 	
 	// Check balance of tree
 
@@ -260,11 +264,11 @@ void check_balance(tr node, vi& heights, vi& leaf_wts, vi &real_hts, int level, 
 	}
 	// else
 	if(node->weight > 1)
-		// printf("Current node overweight\n");
-	// if(node->weight == 0 && node->left != NULL && node->left->weight == 0)
-	// 	printf("Current node left red-red\n");
-	// if(node->weight == 0 && node->right != NULL && node->right->weight == 0)
-	// 	printf("Current node right red-red\n");
+		printf("Current node overweight\n");
+	if(node->weight == 0 && node->left != NULL && node->left->weight == 0)
+		printf("Current node left red-red\n");
+	if(node->weight == 0 && node->right != NULL && node->right->weight == 0)
+		printf("Current node right red-red\n");
 	check_balance(node->left, heights, leaf_wts, real_hts, level+node->weight, true_level+1);
 	check_balance(node->right, heights, leaf_wts, real_hts, level+node->weight, true_level+1);
 }
