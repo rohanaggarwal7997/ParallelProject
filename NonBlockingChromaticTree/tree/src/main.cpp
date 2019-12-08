@@ -20,6 +20,8 @@ int n;
 int num_processes;
 int sleep_time;
 int rebal;
+int num_rebal_threads;
+int rebal_sleep;
 
 void check_balance(tr node, vi& heights, vi& leaf_wts, vi &real_hts, int level, int true_level);
 
@@ -35,15 +37,15 @@ void delete_nodes(int tid, vi *delKeys, int low, int high) {
 void rebalancingThreadFunction(int tid, std::atomic<bool> * continueRebalancing) {
 	while((*continueRebalancing) == true){
 		rebalancingThreadOperation(tid);
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		std::this_thread::sleep_for(std::chrono::milliseconds(rebal_sleep));
 	}
 }
 
 int main(int argc, char const *argv[])
 {	
 
-	if(argc != 5) {
-		printf("Enter num_processes, n, sleep time and rebalance\n");
+	if(argc != 7) {
+		printf("Enter num_processes, n, sleep time, rebalance, rebal threads and rebal sleep\n");
 		return 1;
 	}
 
@@ -51,6 +53,8 @@ int main(int argc, char const *argv[])
 	num_processes = atoi(argv[2]);
 	sleep_time = atoi(argv[3]);
 	rebal = atoi(argv[4]);
+	num_rebal_threads = atoi(argv[5]);
+	rebal_sleep = atoi(argv[6]);
 
 	if(rebal == 0)
 		sleep_time = 0;
@@ -87,16 +91,19 @@ int main(int argc, char const *argv[])
 		runthreads.push_back(tmp);
 	}	
 
+	vector<thread *> rebal_threads;
+
 	thread *rebalancingThreadPointer;
 	thread *rebalancingThreadPointer2;
 	thread *rebalancingThreadPointer3;
 	thread *rebalancingThreadPointer4;
 
 	if(rebal == 1) {
-		rebalancingThreadPointer = new thread(rebalancingThreadFunction, num_processes, &continueRebalancing);
-		rebalancingThreadPointer2 = new thread(rebalancingThreadFunction, num_processes+1, &continueRebalancing);
-		rebalancingThreadPointer3 = new thread(rebalancingThreadFunction, num_processes+2, &continueRebalancing);
-		rebalancingThreadPointer4 = new thread(rebalancingThreadFunction, num_processes+3, &continueRebalancing);
+		for (int i = 0; i < num_rebal_threads; ++i)
+		{
+			thread *tmp = new thread(rebalancingThreadFunction, num_processes+i, &continueRebalancing);
+			rebal_threads.push_back(tmp);
+		}		
 	}	
 
 	// Join on the threads
@@ -251,10 +258,8 @@ int main(int argc, char const *argv[])
 
 	continueRebalancing = false;
 	if(rebal == 1) {
-		rebalancingThreadPointer->join();
-		rebalancingThreadPointer2->join();
-		rebalancingThreadPointer3->join();
-		rebalancingThreadPointer4->join();
+		for (int i = 0; i < num_rebal_threads; ++i)
+			rebal_threads[i]->join();		
 	}		
 	
 	// Check balance of tree
