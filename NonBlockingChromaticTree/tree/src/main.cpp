@@ -5,14 +5,21 @@
 #include <thread>
 #include "tree.h"
 #include <chrono> 
+#include <map>
+#include <utility>
 
 using namespace std::chrono; 
 using namespace std;
 
 typedef vector<int> vi;
 
-const int n = 1000000;
-const int num_processes = 8;
+// const int n = 1000000;
+// const int num_processes = 8;
+
+int n;
+int num_processes;
+int sleep_time;
+int rebal;
 
 void check_balance(tr node, vi& heights, vi& leaf_wts, vi &real_hts, int level, int true_level);
 
@@ -33,7 +40,20 @@ void rebalancingThreadFunction(int tid, std::atomic<bool> * continueRebalancing)
 }
 
 int main(int argc, char const *argv[])
-{
+{	
+
+	if(argc != 5) {
+		printf("Enter num_processes, n, sleep time and rebalance\n");
+		return 1;
+	}
+
+	n = atoi(argv[1]);
+	num_processes = atoi(argv[2]);
+	sleep_time = atoi(argv[3]);
+	rebal = atoi(argv[4]);
+
+	if(rebal == 0)
+		sleep_time = 0;
 
 	std::atomic<bool> continueRebalancing(true);
 
@@ -56,7 +76,7 @@ int main(int argc, char const *argv[])
 
 	// PARALLEL
 	printf("Commence insertion\n");
-	auto start = high_resolution_clock::now(); 
+	auto start_insert = high_resolution_clock::now(); 
 	for (int i = 0; i < num_processes; ++i) {
 		int low = i * chunksize;
 		int high = (i+1) * chunksize;
@@ -65,30 +85,37 @@ int main(int argc, char const *argv[])
 		} 
 		thread *tmp = new thread(insert_nodes, i, &keys, low, high);
 		runthreads.push_back(tmp);
-	}
+	}	
 
-	auto rebalancingThreadPointer = new thread(rebalancingThreadFunction, num_processes, &continueRebalancing);
-	auto rebalancingThreadPointer2 = new thread(rebalancingThreadFunction, num_processes+1, &continueRebalancing);
-	auto rebalancingThreadPointer3 = new thread(rebalancingThreadFunction, num_processes+2, &continueRebalancing);
-	auto rebalancingThreadPointer4 = new thread(rebalancingThreadFunction, num_processes+3, &continueRebalancing);
+	thread *rebalancingThreadPointer;
+	thread *rebalancingThreadPointer2;
+	thread *rebalancingThreadPointer3;
+	thread *rebalancingThreadPointer4;
+
+	if(rebal == 1) {
+		rebalancingThreadPointer = new thread(rebalancingThreadFunction, num_processes, &continueRebalancing);
+		rebalancingThreadPointer2 = new thread(rebalancingThreadFunction, num_processes+1, &continueRebalancing);
+		rebalancingThreadPointer3 = new thread(rebalancingThreadFunction, num_processes+2, &continueRebalancing);
+		rebalancingThreadPointer4 = new thread(rebalancingThreadFunction, num_processes+3, &continueRebalancing);
+	}	
 
 	// Join on the threads
 	for (int i = 0; i < num_processes; ++i)
 		runthreads[i]->join();
-	auto stop = high_resolution_clock::now(); 
-	auto duration = duration_cast<microseconds>(stop - start); 
+	auto stop_insert = high_resolution_clock::now(); 
+	auto duration_insert = duration_cast<microseconds>(stop_insert - start_insert); 
 	printf("End insertion\n");
 
 	cout << "Time taken by insertion: "
-         << duration.count() << " microseconds" << endl; 
+         << duration_insert.count() << " microseconds" << endl; 
 
 	// Check - all can be reached?
-	printf("Check round 1\n");
-	for (int i = 0; i < n; ++i) {
-		if(getNode(keys[i]) == NULL)
-			printf("Key %d at posn %d not found", keys[i], i);
-	}
-	printf("Check round 1 Done\n");
+	// printf("Check round 1\n");
+	// for (int i = 0; i < n; ++i) {
+	// 	if(getNode(keys[i]) == NULL)
+	// 		printf("Key %d at posn %d not found", keys[i], i);
+	// }
+	// printf("Check round 1 Done\n");
 
 	// Shuffle again
 	random_shuffle(keys.begin(), keys.end());
@@ -102,7 +129,7 @@ int main(int argc, char const *argv[])
 	// Delete keys in parallel
 	// PARALLEL
 	printf("Commence deletion\n");
-	start = high_resolution_clock::now(); 
+	auto start_del = high_resolution_clock::now(); 
 	int del_chunk = (n/5) / num_processes;
 	vector<thread *> delthreads;
 	for (int i = 0; i < num_processes; ++i) {
@@ -117,27 +144,27 @@ int main(int argc, char const *argv[])
 
 	for (int i = 0; i < num_processes; ++i)
 		delthreads[i]->join();
-	stop = high_resolution_clock::now(); 
-	duration = duration_cast<microseconds>(stop - start); 
+	auto stop_del = high_resolution_clock::now(); 
+	auto duration_del = duration_cast<microseconds>(stop_del - start_del); 
 	printf("Deletion done\n");
 
 	cout << "Time taken by deletion: "
-         << duration.count() << " microseconds" << endl; 
+         << duration_del.count() << " microseconds" << endl; 
 
 	// rebalancingThreadOperation(0);
 
-	printf("Check round 2\n");
-	for (int i = 0; i < n/5; ++i) {
-		tr x = getNode(keys[i]);
-		if(x != NULL)
-			printf("Key %d at posn %d FOUND\n", keys[i], i);
-	}
-	for (int i = 0; i < n - n/5; ++i) {
-		tr x = getNode(remain_keys[i]); 
-		if((x == NULL))
-			printf("Key %d at posn %d not found\n", remain_keys[i], i);
-	}
-	printf("Check round 2 Done\n");	
+	// printf("Check round 2\n");
+	// for (int i = 0; i < n/5; ++i) {
+	// 	tr x = getNode(keys[i]);
+	// 	if(x != NULL)
+	// 		printf("Key %d at posn %d FOUND\n", keys[i], i);
+	// }
+	// for (int i = 0; i < n - n/5; ++i) {
+	// 	tr x = getNode(remain_keys[i]); 
+	// 	if((x == NULL))
+	// 		printf("Key %d at posn %d not found\n", remain_keys[i], i);
+	// }
+	// printf("Check round 2 Done\n");	
 
 	// Shuffle remaining keys again
 	random_shuffle(remain_keys.begin(), remain_keys.end());
@@ -149,7 +176,7 @@ int main(int argc, char const *argv[])
 
 	random_shuffle(new_keys.begin(), new_keys.end());
 	vector<thread *> delthreads_2;
-	start = high_resolution_clock::now(); 
+	auto start_mix = high_resolution_clock::now(); 
 	int new_chunk ,del_num_processes;
 	if(num_processes == 1) {
 		new_chunk = n/5;
@@ -195,10 +222,10 @@ int main(int argc, char const *argv[])
 	}
 	for (int i = num_processes/2; i < num_processes; ++i)
 		inthreads[i - num_processes/2]->join();
-	stop = high_resolution_clock::now(); 
-	duration = duration_cast<microseconds>(stop - start); 
+	auto stop_mix = high_resolution_clock::now(); 
+	auto duration_mix = duration_cast<microseconds>(stop_mix - start_mix); 
 	cout << "Time taken by insertion and deletion: "
-         << duration.count() << " microseconds" << endl; 
+         << duration_mix.count() << " microseconds" << endl; 
 	printf("Check round 3\n");	
 	// Check - deleted threads should not be accessible
 	for (int i = 0; i < n/5; ++i) {
@@ -218,15 +245,17 @@ int main(int argc, char const *argv[])
 
 
 	printf("Sleeping To Let threads complete the Rebalancings\n");	
-	std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
 	printf("Woke up\n");	
 
 
 	continueRebalancing = false;
-	rebalancingThreadPointer->join();
-	rebalancingThreadPointer2->join();
-	rebalancingThreadPointer3->join();
-	rebalancingThreadPointer4->join();
+	if(rebal == 1) {
+		rebalancingThreadPointer->join();
+		rebalancingThreadPointer2->join();
+		rebalancingThreadPointer3->join();
+		rebalancingThreadPointer4->join();
+	}		
 	
 	// Check balance of tree
 
@@ -236,18 +265,34 @@ int main(int argc, char const *argv[])
 	check_balance(GLOBAL_ROOT->left->left, weighted_heights, leaf_wts, real_hts, level, true_level);
 
 	int ht = weighted_heights[0];
-	for (int i = 1; i < weighted_heights.size(); ++i) {
+
+	if(rebal == 1) {
+		for (int i = 1; i < weighted_heights.size(); ++i) {
 		if(weighted_heights[i] != ht)
 			printf("Height(new) %d different from %d\n", weighted_heights[i], ht);
-	}
+		}
+	}	
 
 	// printf("%d\n", ht);
 
 	// Print true heights
-	// printf("TRUE HEIGHTS\n");
-	// for (int i = 0; i < real_hts.size(); ++i)
-	// 	printf("%d\n", real_hts[i]);
+	printf("TRUE HEIGHTS\n");
+	map<int, int> ht_dist;
+	for (int i = 0; i < real_hts.size(); ++i) {
+		if(ht_dist.find(real_hts[i]) == ht_dist.end())
+			ht_dist.insert(make_pair(real_hts[i], 1));
+		else
+			ht_dist[real_hts[i]]++;
+		// printf("%d\n", real_hts[i]);
+	}
 
+	for (auto itr = ht_dist.begin(); itr != ht_dist.end(); itr++) {
+		cout<<itr->first<<": "<<itr->second<<endl;
+	}
+
+	cout << "insert_time: " << duration_insert.count() << endl; 
+	cout << "delete_time: " << duration_del.count() << endl; 
+	cout << "mix_time: " << duration_mix.count() << endl; 
 	// return 0;
 }
 
