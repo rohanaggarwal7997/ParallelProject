@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <iostream>
+#include <stdio.h>
 #include <algorithm>    // std::swap
 #include <thread>
 #include <mutex>
@@ -98,6 +100,8 @@ void balanceCase2(tr node, tr parent, int whichEdgeRed) {
 
 
 void rebalance(tr node, tr parent) {
+
+	
 
 	int case2_leftright;
 
@@ -225,7 +229,7 @@ void rebalance(tr node, tr parent) {
 			node->weight++;
 		}
 		
-	}
+	}	
 
 	rebalance(node->left, node);
 	rebalance(node->right, node);
@@ -240,15 +244,19 @@ bool isLeaf(tr node) {
 }
 
 tr search(tr root, int key) {
+	// printf("SEARC\n");
+	// std::cout<<"SEARC"<<endl;
 	tr ptr = root;
 	ptr->rwlock.lock_shared();
 	while(true) {
 		if(isLeaf(ptr)) {
 			if(ptr->key == key) {
+				// printf("Hound %d\n", key);
 				ptr->rwlock.unlock_shared();
 				return ptr;
 			}
 			else {
+				// printf("Found %d instead of %d\n", ptr->key, key);
 				ptr->rwlock.unlock_shared();
 				return NULL;
 			}
@@ -257,7 +265,7 @@ tr search(tr root, int key) {
 		// Assuming key can ONLY be leaf coz of locking
 
 		// else
-		if(key < ptr->key) {
+		if(key <= ptr->key) {
 			ptr->left->rwlock.lock_shared();
 			ptr->rwlock.unlock_shared();
 			ptr = ptr->left;
@@ -272,10 +280,8 @@ tr search(tr root, int key) {
 
 void recursiveInsert(tr parent, tr root, int key) {
 
-	// Parent is supposed to be locked when you come in
-	// root is never NULL
-		
-	root->rwlock.lock();
+	// Parent and root are supposed to be locked when you come in
+	// root is never NULL	
 
 	if(isLeaf(root)) {
 		// Release parent
@@ -301,9 +307,20 @@ void recursiveInsert(tr parent, tr root, int key) {
 		root->left = leafLeft;
 		root->right = leafRight;
 		
-		leafLeft->key = root->key < key ? root->key : key;
-		leafRight->key = root->key != leafLeft->key ? root->key : key;
-		root->key = root->right->key;
+		// leafLeft->key = root->key < key ? root->key : key;
+		// leafRight->key = root->key != leafLeft->key ? root->key : key;
+
+		if(key <= root->key) {
+			leafLeft->key = key;
+			leafRight->key = root->key;
+			root->key = leafLeft->key;
+		}
+		else {
+			leafLeft->key = root->key;
+			leafRight->key = key;
+		}
+
+		// root->key = root->right->key;
 
 		root->weight -= 1;
 
@@ -314,7 +331,7 @@ void recursiveInsert(tr parent, tr root, int key) {
 
 	} else {
 		// root left and right are NOT NULL!!		
-		if(root->key > key) {			
+		if(key <= root->key) {			
 			root->left->rwlock.lock();
 			// Release parent lock
 			if(parent != NULL)
@@ -343,6 +360,7 @@ void insert(tr root, int key) {
 		GLOBAL_ROOT->right = NULL;
 		tree_init_lock.unlock();
 	} else {
+		root->rwlock.lock();
 		recursiveInsert(NULL, root, key);
 	}
 }
@@ -352,7 +370,7 @@ void insert(tr root, int key) {
 void recursiveRemove(tr parent, tr root, int key) {
 
 	// Assume parent is already locked
-	root->rwlock.lock();
+	// root->rwlock.lock();
 
 	if(isLeaf(root)) {
 		// Leaf Node Code
@@ -389,7 +407,7 @@ void recursiveRemove(tr parent, tr root, int key) {
 		}
 		
 	} else {
-		if(root->key > key) {
+		if(key <= root->key) {
 			// Lock the child
 			root->left->rwlock.lock();
 			if(parent != NULL)
@@ -412,6 +430,7 @@ void remove(tr root, int key) {
 	if(root == NULL) {
 		return;
 	} else {
+		root->rwlock.lock();
 		recursiveRemove(NULL, root, key);
 	}
 }

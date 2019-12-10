@@ -18,6 +18,7 @@ typedef struct node {
 
 tr GLOBAL_ROOT;
 SCXProvider<node, 100> * GLOBAL_SCX;
+std::atomic<int> numRebalOps;
 
 pair<int, bool> tryDelete(int key, int tid);
 
@@ -807,9 +808,10 @@ void rebalance(tr node, tr parent, int tid) {
 	}
 
 	if(rebalanceRun) {
-		// if(rebalanceSucceeded) {
-		// 	// std::cout<<"Rebalance Succeeded"+to_string(x)+"\n";
-		// } else {
+		if(rebalanceSucceeded) {
+			// std::cout<<"Rebalance Succeeded"+to_string(x)+"\n";
+			numRebalOps++;
+		} //else {
 		// 	// std::cout<<"Rebalance Failed \n"+to_string(x)+"\n";
 		// }
 	} else {

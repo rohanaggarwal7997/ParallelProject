@@ -59,7 +59,7 @@ int main(int argc, char const *argv[])
 	if(rebal == 0)
 		sleep_time = 0;
 
-	std::atomic<bool> continueRebalancing(true);
+	std::atomic<bool> continueRebalancing(true);	
 
 	vi keys(n);	
 
@@ -247,17 +247,14 @@ int main(int argc, char const *argv[])
 		if(getNode(new_keys[i]) == NULL)
 			printf("New key %d at position %d not found\n", new_keys[i], i);		
 	}
-	printf("Check round 3 Done\n");
-
-
-
-	printf("Sleeping To Let threads complete the Rebalancings\n");	
-	std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
-	printf("Woke up\n");	
-
-
-	continueRebalancing = false;
-	if(rebal == 1) {
+	printf("Check round 3 Done\n");	
+	
+	if(rebal == 1) {				
+		continueRebalancing = false;
+		printf("Sleeping To Let threads complete the Rebalancings\n");	
+		numRebalOps = 0;
+		std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+		printf("Woke up\n");
 		for (int i = 0; i < num_rebal_threads; ++i)
 			rebal_threads[i]->join();		
 	}		
@@ -294,7 +291,7 @@ int main(int argc, char const *argv[])
 	for (auto itr = ht_dist.begin(); itr != ht_dist.end(); itr++) {
 		cout<<itr->first<<": "<<itr->second<<endl;
 	}
-
+	cout << "num_rebal_ops: "<<numRebalOps<<endl;
 	cout << "insert_time: " << duration_insert.count() << endl; 
 	cout << "delete_time: " << duration_del.count() << endl; 
 	cout << "mix_time: " << duration_mix.count() << endl; 
@@ -313,12 +310,14 @@ void check_balance(tr node, vi& heights, vi& leaf_wts, vi &real_hts, int level, 
 		return;
 	}
 	// else
-	if(node->weight > 1)
-		printf("Current node overweight\n");
-	if(node->weight == 0 && node->left != NULL && node->left->weight == 0)
-		printf("Current node left red-red\n");
-	if(node->weight == 0 && node->right != NULL && node->right->weight == 0)
-		printf("Current node right red-red\n");
+	if(rebal == 1) {
+		if(node->weight > 1)
+			printf("Current node overweight\n");
+		if(node->weight == 0 && node->left != NULL && node->left->weight == 0)
+			printf("Current node left red-red\n");
+		if(node->weight == 0 && node->right != NULL && node->right->weight == 0)
+			printf("Current node right red-red\n");
+	}	
 	check_balance(node->left, heights, leaf_wts, real_hts, level+node->weight, true_level+1);
 	check_balance(node->right, heights, leaf_wts, real_hts, level+node->weight, true_level+1);
 }
