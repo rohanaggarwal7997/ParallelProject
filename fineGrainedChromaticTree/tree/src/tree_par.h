@@ -5,6 +5,7 @@
 #include <thread>
 #include <mutex>
 #include <shared_mutex>
+#include <assert.h>
 
 using namespace std;
 
@@ -66,6 +67,9 @@ int checkCase2(tr node) {
 }
 
 void balanceCase2(tr node, tr parent, int whichEdgeRed) {	
+
+	// parent and node are locked
+
 	tr v, u, B;
 	// Left edge is red
 	if(whichEdgeRed == 1) {
@@ -101,17 +105,26 @@ void balanceCase2(tr node, tr parent, int whichEdgeRed) {
 
 void rebalance(tr node, tr parent) {
 
-	
+	// Parent and node are supposed to be locked when you come in
+
 
 	int case2_leftright;
 
-	if(node == NULL)
+	if(node == NULL) {
+		printf("ERROR!!\n");
+		assert(false);
 		return;
+	}
 
-	if(node->left == NULL && node->right == NULL) return; 
+	if(isLeaf(node)) {
+		// Release parent and nodew
+		node->rwlock.unlock();
+		parent->rwlock.unlock();
+		return;
+	}
 
-	if(node->left->weight == 0 && node->right->weight == 0 && (parent == NULL || node->weight > 0)) {
-		
+	if(node->left->weight == 0 && node->right->weight == 0 && (parent == NULL || node->weight > 0)) {		
+
 		node->left->weight = 1;
 		node->right->weight = 1;
 
@@ -231,7 +244,15 @@ void rebalance(tr node, tr parent) {
 		
 	}	
 
+	// Lock the left node
+	node->left->rwlock.lock();
+	if(parent != NULL)
+		parent->rwlock.unlock();
 	rebalance(node->left, node);
+
+	// node would have been unlocked by now!
+	node->rwlock.lock();
+	node->right->rwlock.lock();
 	rebalance(node->right, node);
 
 }
@@ -435,3 +456,16 @@ void remove(tr root, int key) {
 	}
 }
 
+void rebalancingThreadOperation() {
+	
+	// GLOBAL_ROOT->left->rwlock.lock();
+	// rebalance(GLOBAL_ROOT->left, NULL);
+
+	GLOBAL_ROOT->left->rwlock.lock();
+	GLOBAL_ROOT->left->left->rwlock.lock();
+	rebalance(GLOBAL_ROOT->left->left, GLOBAL_ROOT->left);
+	GLOBAL_ROOT->left->rwlock.lock();
+	GLOBAL_ROOT->left->right->rwlock.lock();
+	rebalance(GLOBAL_ROOT->left->right, GLOBAL_ROOT->left);
+
+}

@@ -20,16 +20,24 @@ int num_processes;
 void check_balance(tr root, vi& heights, vi& leaf_wts, int level);
 
 void insert_nodes(vi *inKeys, int low, int high) {
-	printf("INSERT (%d,%d)\n", low, high);
+	// printf("INSERT (%d,%d)\n", low, high);
 	for (int i = low; i < high; ++i)
 		insert(GLOBAL_ROOT, (*inKeys)[i]);
 }
 
 void delete_nodes(vi *delKeys, int low, int high) {
-	printf("DELETE (%d,%d)\n", low, high);
+	// printf("DELETE (%d,%d)\n", low, high);
 	for (int i = low; i < high; ++i)
 		remove(GLOBAL_ROOT, (*delKeys)[i]);
 }
+
+void rebalancingThreadFunction(std::atomic<bool> * continueRebalancing) {
+	while((*continueRebalancing) == true){
+		rebalancingThreadOperation();
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
+}
+
 
 int main(int argc, char const *argv[])
 {
@@ -56,6 +64,8 @@ int main(int argc, char const *argv[])
 	// 	printf("%d,", keys[i]);
 
 	printf("\n");
+
+	std::atomic<bool> continueRebalancing(true);
 
 	GLOBAL_ROOT = NULL;
 
@@ -94,14 +104,28 @@ int main(int argc, char const *argv[])
 		runthreads.push_back(tmp);
 	}
 
+	// Launch rebalancing
+	vector<thread *> rebal_thr;	
+	for (int i = 0; i < 1; ++i)
+	{
+		thread * tmp = new thread(rebalancingThreadFunction, &continueRebalancing);
+		rebal_thr.push_back(tmp);
+	}	
+
 	for (int i = 0; i < num_processes; ++i)
 		runthreads[i]->join();
+
 	auto stop = high_resolution_clock::now(); 
 	auto duration = duration_cast<microseconds>(stop - start); 
 	printf("End insertion\n");
 	cout << "Time taken by insertion: "
          << duration.count() << " microseconds" << endl; 
 	
+	// Stop rebalancing
+	continueRebalancing = false;
+	for (int i = 0; i < 1; ++i)
+		rebal_thr[i]->join();
+
 
 	// Can we find all keys?
 	for (int i = 0; i < n; ++i) {
@@ -116,14 +140,8 @@ int main(int argc, char const *argv[])
 	// Rebalance
 	
 	if(GLOBAL_ROOT->right != NULL)
-		printf("ERR1\n");
-	if(GLOBAL_ROOT->left->right != NULL) {
-		printf("%d %d ", GLOBAL_ROOT->left->right->key, GLOBAL_ROOT->left->key);
-		printf("ERR2\n");
-	}
-	printf("Root key %d\n", GLOBAL_ROOT->left->left->key);
+		printf("ERR1\n");		
 	
-	rebalance(GLOBAL_ROOT->left, NULL);
 	check_balance(GLOBAL_ROOT->left, heights, leaf_wts, 0);
 
 	// Check if all the elements are same
@@ -158,6 +176,14 @@ int main(int argc, char const *argv[])
 		delthreads.push_back(tmp);
 	}
 	
+	continueRebalancing = true;
+	vector<thread *> rebal_thr2;	
+	for (int i = 0; i < 1; ++i)
+	{
+		thread * tmp = new thread(rebalancingThreadFunction, &continueRebalancing);
+		rebal_thr2.push_back(tmp);
+	}	
+
 	for (int i = 0; i < num_processes; ++i)
 		delthreads[i]->join();
 	stop = high_resolution_clock::now(); 
@@ -166,6 +192,10 @@ int main(int argc, char const *argv[])
 
 	cout << "Time taken by deletion: "
          << duration.count() << " microseconds" << endl; 
+
+    continueRebalancing = false;
+	for (int i = 0; i < 1; ++i)
+		rebal_thr2[i]->join();
 
 	// for (int i = 0; i < n/10; ++i)
 	// 	remove(GLOBAL_ROOT, keys[i*10]);
@@ -185,7 +215,9 @@ int main(int argc, char const *argv[])
 
 	vi heights_new;
 	vi leaf_wts_new;
-	rebalance(GLOBAL_ROOT->left, NULL);
+	rebalancingThreadOperation();
+	// GLOBAL_ROOT->left->rwlock.lock();
+	// rebalance(GLOBAL_ROOT->left, NULL);
 	check_balance(GLOBAL_ROOT->left, heights_new, leaf_wts_new, 0);
 
 	ht = heights_new[0];
